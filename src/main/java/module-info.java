@@ -4,6 +4,7 @@ module com.example.layoutmanager {
     requires javafx.web;
     requires java.desktop;
     requires javafx.media;
+    requires java.sql;
 
 
     opens com.javaFX to javafx.fxml;
