@@ -1,0 +1,38 @@
+/* styles.css */
+
+/* BorderPane (root) */
+.root {
+    -fx-background-color: #f0f0f0;
+}
+
+/* HBox for URL input */
+.hbox {
+    -fx-spacing: 10;
+    -fx-padding: 10;
+}
+
+/* TextField for URL input */
+.text-field {
+    -fx-pref-width: 300;
+}
+
+/* Button for Search */
+.button {
+    -fx-background-color: #4CAF50; /* Green */
+    -fx-border-radius: 5;
+    -fx-background-radius: 5;
+    -fx-text-fill: white;
+}
+
+/* Button hover effect */
+.button:hover {
+    -fx-background-color: #45a049; /* Darker green */
+}
+
+/* TextArea for Links and SEO Analysis */
+.text-area {
+    -fx-pref-width: 550;
+    -fx-pref-height: 200;
+    -fx-font-family: Arial;
+    -fx-font-size: 14;
+}
