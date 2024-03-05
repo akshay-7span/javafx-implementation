@@ -7,19 +7,26 @@ module com.example.layoutmanager {
     requires java.sql;
 
 
-    opens com.javaFX to javafx.fxml;
-    exports com.javaFX.helloWord;
+    exports com.javaFX.utils;
+    exports com.javaFX.switching;
+    exports com.javaFX.scrollPane;
+    exports com.javaFX.spinner;
+    exports com.javaFX.toolbar;
+    exports com.javaFX.treeView;
+    exports com.javaFX.titlePane;
+    exports com.javaFX.tabPane;
+    exports com.javaFX.htmlEditor;
+    exports com.javaFX.hyperLink;
+    exports com.javaFX.pagination;
+    exports com.javaFX.mediaView;
+    exports com.javaFX.menuBar;
+    exports com.javaFX.contextMenu;
+    exports com.javaFX.menuButton;
+    exports com.javaFX.splitMenuButton;
+    exports com.javaFX.dialog;
+    exports com.javaFX.webView;
+    exports com.javaFX.databaseCall;
+    exports com.javaFX.css;
     exports com.javaFX.layout;
-    opens com.javaFX.layout to javafx.fxml;
-    exports com.javaFX.checkBox;
-    opens com.javaFX.checkBox to javafx.fxml;
-    exports com.javaFX.textField;
-    opens com.javaFX.textField to javafx.fxml;
-    exports com.javaFX.radioButton;
-    opens com.javaFX.radioButton to javafx.fxml;
-    exports com.javaFX.eventHandler;
-    exports com.javaFX.button;
-    exports com.javaFX.label;
-
-
+    opens com.javaFX.toolbar to javafx.fxml;
 }
