@@ -179,7 +179,6 @@ public class WebCrawlerAppUsingHTMLUnit extends Application {
                     // Extract SEO-related information
                     String title = page.getTitleText();
                     DomNodeList<HtmlElement> metaTags = page.getHead().getElementsByTagName("meta");
-                    DomNodeList<DomElement> headerTags = page.getElementsByTagName("h1"); // Extract h1 tags
 
                     StringBuilder seoReport = new StringBuilder();
                     seoReport.append("SEO Analysis Report for ").append(url).append(":\n");
@@ -194,9 +193,14 @@ public class WebCrawlerAppUsingHTMLUnit extends Application {
                     }
 
                     // Extract and analyze header tags
-                    seoReport.append("\nHeader Tags (h1, h2, h3):\n");
-                    for (DomElement headerTag : headerTags) {
-                        seoReport.append(headerTag.getTagName()).append(": ").append(headerTag.getTextContent()).append("\n");
+                    seoReport.append("\nHeader Tags :\n");
+                    Iterable<HtmlElement> allElements = page.getHtmlElementDescendants();
+                    for (DomElement element : allElements) {
+                        String tagName = element.getTagName();
+                        if (tagName.matches("h[1-6]")) { // Check if the tag name is h1, h2, h3, h4, h5, or h6
+                            String tagContent = element.getTextContent();
+                            seoReport.append(tagName).append(": ").append(tagContent).append("\n");
+                        }
                     }
                     crawlSEO(url, seoReport.toString());
 
