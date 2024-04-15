@@ -7,8 +7,11 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import webcrawler.newUI.WebCrawlingApp.*;
 
 public class DatabaseCall {
     private static final String DB_URL = "jdbc:mysql://localhost:3306/demo";
@@ -40,6 +43,7 @@ public class DatabaseCall {
             // Handle exceptions
         }
     }
+
     static void fetchDataForTableView2(TableView<WebCrawlingApp.SEOData> tableView) {
         try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD)) {
             String query = "SELECT page_name, content_type, url, meta_tags FROM seo_analysis WHERE meta_tags IS NOT NULL";
@@ -92,6 +96,7 @@ public class DatabaseCall {
             // Handle exceptions
         }
     }
+
     static void fetchDataForLinksTableView(TableView<WebCrawlingApp.LinkData> tableView) {
         try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD)) {
             String query = "SELECT link, url, status FROM link_crawled_data";
@@ -116,6 +121,7 @@ public class DatabaseCall {
             // Handle exceptions
         }
     }
+
     static void fetchDataForLinksTableViewForStatus(TableView<WebCrawlingApp.LinkData> tableViewLinks) {
         try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD)) {
             String query = "SELECT link, status FROM link_crawled_data";
@@ -139,6 +145,7 @@ public class DatabaseCall {
             // Handle exceptions
         }
     }
+
     static void fetchDataForLinksTableViewForPageName(TableView<WebCrawlingApp.LinkData> tableViewLinks) {
         try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD)) {
             String query = "SELECT link, url FROM link_crawled_data";
@@ -162,6 +169,7 @@ public class DatabaseCall {
             // Handle exceptions
         }
     }
+
     static void fetchDataForImagesTableView(TableView<WebCrawlingApp.ImageData> tableView) {
         try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD)) {
             String query = "SELECT url, page_name, image_url FROM crawled_images";
@@ -178,7 +186,7 @@ public class DatabaseCall {
                     String imageUrl = resultSet.getString("image_url");
 
                     // Add data to TableView
-                    tableView.getItems().add(new WebCrawlingApp.ImageData(pageUrl, pageName, imageUrl,"",""));
+                    tableView.getItems().add(new WebCrawlingApp.ImageData(pageUrl, pageName, imageUrl, "", ""));
                 }
             }
         } catch (Exception e) {
@@ -186,6 +194,7 @@ public class DatabaseCall {
             // Handle exceptions
         }
     }
+
     static void fetchDataForImageSizeTableView(TableView<WebCrawlingApp.ImageData> tableView) {
         try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD)) {
             String query = "SELECT url, page_name, image_url, image_size FROM crawled_images";
@@ -209,6 +218,7 @@ public class DatabaseCall {
             // Handle exceptions
         }
     }
+
     static void fetchDataForMetaTextTableView(TableView<WebCrawlingApp.ImageData> tableView) {
         try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD)) {
             String query = "SELECT url, page_name, image_url, alt_text FROM crawled_images";
@@ -232,6 +242,7 @@ public class DatabaseCall {
             // Handle exceptions
         }
     }
+
     public static void insertLinkData(String url, String linkText, String pageName, String status) {
         try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/demo", "root", "root")) {
             String sql = "INSERT INTO link_crawled_data (url, link, page_name, status) VALUES (?, ?, ?, ?)";
@@ -246,8 +257,9 @@ public class DatabaseCall {
             e.printStackTrace();
         }
     }
-    public static void insertSEOData(String url, String title, String metaTags, String headerTags, String contentType) throws SQLException {
-        String sql = "INSERT INTO seo_analysis (url, page_name, meta_tags, header_tags, content_type) VALUES (?, ?, ?, ?, ?)";
+
+    public static void insertSEOData(String url, String title, String metaTags, String headerTags, String contentType, String pageLoadTime, String repeatedWords) throws SQLException {
+        String sql = "INSERT INTO seo_analysis (url, page_name, meta_tags, header_tags, content_type,load_time, repeated_words) VALUES (?, ?, ?, ?, ?,?,?)";
         try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/demo", "root", "root")) {
             try (PreparedStatement statement = connection.prepareStatement(sql)) {
                 statement.setString(1, url);
@@ -255,12 +267,15 @@ public class DatabaseCall {
                 statement.setString(3, metaTags);
                 statement.setString(4, headerTags);
                 statement.setString(5, contentType);
+                statement.setString(6, pageLoadTime);
+                statement.setString(7, repeatedWords);
                 statement.executeUpdate();
             } catch (SQLException e) {
                 e.printStackTrace();
             }
         }
     }
+
     public static void insertImageData(String pageName, String url, String imageUrl, String altText, String size) throws SQLException {
         try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/demo", "root", "root")) {
             String sql = "INSERT INTO crawled_images (page_name, url, image_url, alt_text, image_size) VALUES (?, ?, ?, ?, ?)";
@@ -278,20 +293,22 @@ public class DatabaseCall {
     public static List<WebCrawlingApp.LinkDataForExcel> retrieveLinkDataFromDatabase() throws SQLException {
         List<WebCrawlingApp.LinkDataForExcel> links = new ArrayList<>();
         try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD)) {
-            String sql = "SELECT * FROM link_crawled_data";
+            String sql = "SELECT * FROM crawled_data";
             try (PreparedStatement statement = connection.prepareStatement(sql)) {
                 ResultSet resultSet = statement.executeQuery();
                 while (resultSet.next()) {
-                    String url = resultSet.getString("url");
-                    String link = resultSet.getString("link");
                     String pageName = resultSet.getString("page_name");
-                    String status = resultSet.getString("status");
-                    links.add(new WebCrawlingApp.LinkDataForExcel(url, link, pageName, status));
+                    String pageUrl = resultSet.getString("page_url");
+                    String linkUrl = resultSet.getString("link_url");
+                    String linkType = resultSet.getString("link_type");
+                    int status = resultSet.getInt("status");
+                    links.add(new WebCrawlingApp.LinkDataForExcel(pageName, pageUrl, linkUrl, linkType, status));
                 }
             }
         }
         return links;
     }
+
 
     public static List<WebCrawlingApp.SeoAnalysisData> retrieveSeoAnalysisDataFromDatabase() throws SQLException {
         List<WebCrawlingApp.SeoAnalysisData> seoDataList = new ArrayList<>();
@@ -305,7 +322,9 @@ public class DatabaseCall {
                     String metaTags = resultSet.getString("meta_tags");
                     String headerTags = resultSet.getString("header_tags");
                     String contentType = resultSet.getString("content_type");
-                    seoDataList.add(new WebCrawlingApp.SeoAnalysisData(url, pageName, metaTags, headerTags, contentType));
+                    String loadTime = resultSet.getString("load_time");
+                    String repeatedWords = resultSet.getString("repeated_words");
+                    seoDataList.add(new WebCrawlingApp.SeoAnalysisData(url, pageName, metaTags, headerTags, contentType, loadTime, repeatedWords));
                 }
             }
         }
@@ -332,226 +351,192 @@ public class DatabaseCall {
         return imageDataList;
     }
 
+    public static List<WebCrawlingApp.SEODataForCrawling> retrieveCrawledSeoDataFromDatabase() throws SQLException {
+        List<WebCrawlingApp.SEODataForCrawling> seoDataForCrawlings = new ArrayList<>();
+        try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD)) {
+            String sql = "SELECT page_name, content_type, url FROM seo_analysis";
+            try (PreparedStatement statement = connection.prepareStatement(sql)) {
+                try (ResultSet resultSet = statement.executeQuery()) {
+                    while (resultSet.next()) {
+                        String pageName = resultSet.getString("page_name");
+                        String contentType = resultSet.getString("content_type");
+                        String pageUrl = resultSet.getString("url");
 
-
-    /*private static final String MAP_NAME_SEO = "seo_analysis_map";
-    private static final String MAP_NAME_LINKS = "link_crawled_data_map";
-    private static final String MAP_NAME_IMAGES = "crawled_images_map";
-
-    private static HazelcastInstance hazelcastInstance;
-
-    public static void initHazelcast() {
-        hazelcastInstance = Hazelcast.newHazelcastInstance();
-    }
-
-    public static HazelcastInstance getHazelcastInstance() {
-        if (hazelcastInstance == null) {
-            initHazelcast();
-        }
-        return hazelcastInstance;
-    }
-
-    public static IMap<String, WebCrawlingApp.SEOData> getSEODataMap() {
-        return hazelcastInstance.getMap(MAP_NAME_SEO);
-    }
-
-    public static IMap<String, WebCrawlingApp.LinkData> getLinkDataMap() {
-        return hazelcastInstance.getMap(MAP_NAME_LINKS);
-    }
-
-    public static IMap<String, WebCrawlingApp.ImageData> getImageDataMap() {
-        return hazelcastInstance.getMap(MAP_NAME_IMAGES);
-    }
-
-    // Fetch data for TableView1
-    static void fetchDataForTableView1(TableView<WebCrawlingApp.SEOData> tableView) {
-        IMap<String, WebCrawlingApp.SEOData> seoDataMap = getHazelcastInstance().getMap("seo_data_map");
-
-        // Clear previous data
-        tableView.getItems().clear();
-
-        // Populate TableView with data fetched from Hazelcast
-        for (Map.Entry<String, WebCrawlingApp.SEOData> entry : seoDataMap.entrySet()) {
-            tableView.getItems().add(entry.getValue());
-        }
-    }
-
-    // Fetch data for TableView2
-    static void fetchDataForTableView2(TableView<WebCrawlingApp.SEOData> tableView) {
-        IMap<String, WebCrawlingApp.SEOData> seoDataMap = getHazelcastInstance().getMap("seo_data_map");
-
-        // Clear previous data
-        tableView.getItems().clear();
-
-        // Populate TableView with filtered data from Hazelcast
-        for (Map.Entry<String, SEOData> entry : seoDataMap.entrySet()) {
-            SEOData seoData = entry.getValue();
-            if (seoData.getMeta() != null && !seoData.getMeta().isEmpty()) {
-                tableView.getItems().add(seoData);
+                        WebCrawlingApp.SEODataForCrawling seoData = new WebCrawlingApp.SEODataForCrawling(pageName, contentType, pageUrl);
+                        seoDataForCrawlings.add(seoData);
+                    }
+                }
             }
         }
+        return seoDataForCrawlings;
+
     }
 
-    // Fetch data for TableView3
-    static void fetchDataForTableView3(TableView<SEOData> tableView) {
-        IMap<String, SEOData> seoDataMap = getHazelcastInstance().getMap("seo_data_map");
+    public static List<WebCrawlingApp.SEODataForCrawling> fetchDataFromDatabase(String selectedUrl) throws SQLException {
+        List<WebCrawlingApp.SEODataForCrawling> seoDataForCrawlings = new ArrayList<>();
+        String sql = "SELECT page_name, url, content_type FROM seo_analysis WHERE url = ?";
+        try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            // Set the URL parameter value
+            statement.setString(1, selectedUrl);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    String pageName = resultSet.getString("page_name");
+                    String contentType = resultSet.getString("content_type");
+                    String pageUrl = resultSet.getString("url");
 
-        // Clear previous data
-        tableView.getItems().clear();
-
-        // Populate TableView with data fetched from Hazelcast
-        for (Map.Entry<String, SEOData> entry : seoDataMap.entrySet()) {
-            SEOData seoData = entry.getValue();
-            if (seoData.getH1() != null && !seoData.getH1().isEmpty()) {
-                tableView.getItems().add(seoData);
+                    WebCrawlingApp.SEODataForCrawling seoData = new WebCrawlingApp.SEODataForCrawling(pageName, contentType, pageUrl);
+                    seoDataForCrawlings.add(seoData);
+                }
             }
         }
+        return seoDataForCrawlings;
     }
 
-    // Fetch data for Links TableView
-    static void fetchDataForLinksTableView(TableView<LinkData> tableView) {
-        IMap<String, LinkData> linkDataMap = getHazelcastInstance().getMap("link_data_map");
-
-        // Clear previous data
-        tableView.getItems().clear();
-
-        // Populate TableView with data fetched from Hazelcast
-        for (Map.Entry<String, LinkData> entry : linkDataMap.entrySet()) {
-            tableView.getItems().add(entry.getValue());
-        }
-    }
-
-    // Fetch data for Links TableView filtered by status
-    static void fetchDataForLinksTableViewForStatus(TableView<LinkData> tableView) {
-        IMap<String, LinkData> linkDataMap = getHazelcastInstance().getMap("link_data_map");
-
-        // Clear previous data
-        tableView.getItems().clear();
-
-        // Populate TableView with filtered data from Hazelcast
-        for (Map.Entry<String, LinkData> entry : linkDataMap.entrySet()) {
-            LinkData linkData = entry.getValue();
-            if (linkData.getStatus() != null && !linkData.getStatus().isEmpty()) {
-                tableView.getItems().add(linkData);
+    // Method to fetch meta data from the database
+    public static List<String> fetchMetaDataFromDatabase(String selectedUrl) throws SQLException {
+        List<String> metaDataList = new ArrayList<>();
+        String sql = "SELECT meta_tags FROM seo_analysis WHERE url = ?";
+        try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, selectedUrl);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    String metaData = resultSet.getString("meta_tags");
+                    metaDataList.add(metaData);
+                }
             }
         }
+        return metaDataList;
     }
 
-    // Fetch data for Links TableView filtered by page name
-    static void fetchDataForLinksTableViewForPageName(TableView<LinkData> tableView) {
-        IMap<String, LinkData> linkDataMap = getHazelcastInstance().getMap("link_data_map");
-
-        // Clear previous data
-        tableView.getItems().clear();
-
-        // Populate TableView with filtered data from Hazelcast
-        for (Map.Entry<String, LinkData> entry : linkDataMap.entrySet()) {
-            LinkData linkData = entry.getValue();
-            if (linkData.getPageName() != null && !linkData.getPageName().isEmpty()) {
-                tableView.getItems().add(linkData);
+    public static List<String> fetchHeaderTagsFromDatabase(String selectedUrl) throws SQLException {
+        List<String> headerTagsList = new ArrayList<>();
+        String sql = "SELECT header_tags FROM seo_analysis WHERE url = ?";
+        try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, selectedUrl);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    String headerTags = resultSet.getString("header_tags");
+                    // Split the header_tags by comma if multiple tags are stored in the database
+                    String[] headerTagsArray = headerTags.split(",");
+                    headerTagsList.addAll(Arrays.asList(headerTagsArray));
+                }
             }
         }
+        return headerTagsList;
     }
 
-    // Fetch data for Images TableView
-    static void fetchDataForImagesTableView(TableView<ImageData> tableView) {
-        IMap<String, ImageData> imageDataMap = getHazelcastInstance().getMap("image_data_map");
-
-        // Clear previous data
-        tableView.getItems().clear();
-
-        // Populate TableView with data fetched from Hazelcast
-        for (Map.Entry<String, ImageData> entry : imageDataMap.entrySet()) {
-            tableView.getItems().add(entry.getValue());
+    // Method to fetch repeatedWords data from the database based on the selected URL
+    public static List<String> fetchRepeatedWordsFromDatabase(String selectedUrl) throws SQLException {
+        List<String> repeatedWordsList = new ArrayList<>();
+        String sql = "SELECT repeated_words FROM seo_analysis WHERE url = ?";
+        try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, selectedUrl);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    String repeatedWords = resultSet.getString("repeated_words");
+                    repeatedWordsList.add(repeatedWords);
+                }
+            }
         }
+        return repeatedWordsList;
     }
 
-    // Fetch data for Image Size TableView
-    static void fetchDataForImageSizeTableView(TableView<ImageData> tableView) {
-        IMap<String, ImageData> imageDataMap = getHazelcastInstance().getMap("image_data_map");
-
-        // Clear previous data
-        tableView.getItems().clear();
-
-        // Populate TableView with data fetched from Hazelcast
-        for (Map.Entry<String, ImageData> entry : imageDataMap.entrySet()) {
-            tableView.getItems().add(entry.getValue());
+    // Method to fetch loadTime data from the database based on the selected URL
+    public static List<String> fetchLoadTimeFromDatabase(String selectedUrl) throws SQLException {
+        List<String> loadTimeList = new ArrayList<>();
+        String sql = "SELECT load_time FROM seo_analysis WHERE url = ?";
+        try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, selectedUrl);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    String loadTime = resultSet.getString("load_time");
+                    // Append "msc" to the load time value
+                    loadTime += "msc";
+                    loadTimeList.add(loadTime);
+                }
+            }
         }
+        return loadTimeList;
     }
 
-    // Fetch data for Meta Text TableView
-    static void fetchDataForMetaTextTableView(TableView<ImageData> tableView) {
-        IMap<String, ImageData> imageDataMap = getHazelcastInstance().getMap("image_data_map");
-
-        // Clear previous data
-        tableView.getItems().clear();
-
-        // Populate TableView with data fetched from Hazelcast
-        for (Map.Entry<String, ImageData> entry : imageDataMap.entrySet()) {
-            tableView.getItems().add(entry.getValue());
-        }
-    }
-
-    // Insert Link data into Hazelcast
-    public static void insertLinkData(String url, String linkText, String pageName, String status) {
-        IMap<String, LinkData> linkDataMap = getHazelcastInstance().getMap("link_data_map");
-        String key = generateUniqueKey();
-        LinkData linkData = new LinkData(url, linkText, status);
-        linkDataMap.put(key, linkData);
-    }
-
-    // Insert SEO data into Hazelcast
-    public static void insertSEOData(String url, String title, String metaTags, String headerTags, String contentType) {
-        IMap<String, SEOData> seoDataMap = getHazelcastInstance().getMap("seo_data_map");
-        String key = generateUniqueKey();
-        SEOData seoData = new SEOData(url, title, metaTags, headerTags, contentType);
-        seoDataMap.put(key, seoData);
-    }
-
-    // Insert Image data into Hazelcast
-    public static void insertImageData(String pageName, String url, String imageUrl, String altText, String size) {
-        IMap<String, ImageData> imageDataMap = getHazelcastInstance().getMap("image_data_map");
-        String key = generateUniqueKey();
-        ImageData imageData = new ImageData(pageName, url, imageUrl, altText, size);
-        imageDataMap.put(key, imageData);
-    }
-
-    // Retrieve Link data from Hazelcast
-    public static List<LinkDataForExcel> retrieveLinkDataFromDatabase() {
-        List<LinkDataForExcel> links = new ArrayList<>();
-        IMap<String, LinkData> linkDataMap = getHazelcastInstance().getMap("link_data_map");
-        for (Map.Entry<String, LinkData> entry : linkDataMap.entrySet()) {
-            links.add(new LinkDataForExcel(entry.getValue().getUrl(), entry.getValue().getUrl(), entry.getValue().getPageName(), entry.getValue().getStatus()));
-        }
-        return links;
-    }
-
-    // Retrieve SEO data from Hazelcast
-    public static List<WebCrawlingApp.SeoAnalysisData> retrieveSeoAnalysisDataFromDatabase() {
-        List<WebCrawlingApp.SeoAnalysisData> seoDataList = new ArrayList<>();
-        IMap<String, WebCrawlingApp.SEOData> seoDataMap = getHazelcastInstance().getMap("seo_data_map");
-        for (Map.Entry<String, WebCrawlingApp.SEOData> entry : seoDataMap.entrySet()) {
-            WebCrawlingApp.SEOData seoData = entry.getValue();
-            seoDataList.add(new WebCrawlingApp.SeoAnalysisData(seoData.getPageUrl(), seoData.getPageName(), seoData.getMeta(), seoData.getH1(), seoData.getContentType()));
-        }
-        return seoDataList;
-    }
-
-    // Retrieve Image data from Hazelcast
-    public static List<CrawledImageData> retrieveCrawledImageDataFromDatabase() {
-        List<CrawledImageData> imageDataList = new ArrayList<>();
-        IMap<String, ImageData> imageDataMap = getHazelcastInstance().getMap("image_data_map");
-        for (Map.Entry<String, ImageData> entry : imageDataMap.entrySet()) {
-            ImageData imageData = entry.getValue();
-            imageDataList.add(new CrawledImageData(imageData.getPageUrl(), imageData.getPageName(), imageData.getImageUrl(), imageData.getAltText(), imageData.getImageSize()));
+    public static List<WebCrawlingApp.ImageData> fetchImageDataFromDatabase(String url) throws SQLException {
+        List<WebCrawlingApp.ImageData> imageDataList = new ArrayList<>();
+        String sql = "SELECT page_name, image_url, image_size, alt_text FROM crawled_images WHERE url = ?";
+        try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, url);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    String pageName = resultSet.getString("page_name");
+                    String imageUrl = resultSet.getString("image_url");
+                    String imageSize = resultSet.getString("image_size");
+                    String altText = resultSet.getString("alt_text");
+                    ImageData imageData = new ImageData(url, pageName, imageUrl, imageSize, altText);
+                    imageDataList.add(imageData);
+                }
+            }
         }
         return imageDataList;
     }
 
+    public static void insertCrawledData(String pageName, String pageUrl, String linkUrl, String linkType, int status) {
+        try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD)) {
+            String sql = "INSERT INTO crawled_data (page_name, page_url, link_url, link_type, status) VALUES (?, ?, ?, ?, ?)";
+            try (PreparedStatement statement = connection.prepareStatement(sql)) {
+                statement.setString(1, pageName);
+                statement.setString(2, pageUrl);
+                statement.setString(3, linkUrl);
+                statement.setString(4, linkType);
+                statement.setInt(5, status);
+                statement.executeUpdate();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
 
-    private static String generateUniqueKey() {
-        // Generate a UUID (Universally Unique Identifier) as the key
-        return UUID.randomUUID().toString();
-    }*/
+    public static List<PageData> getDistinctPageData() {
+        List<PageData> pageDataList = new ArrayList<>();
+        try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+             Statement statement = connection.createStatement();
+             ResultSet resultSet = statement.executeQuery("SELECT DISTINCT page_name FROM crawled_data")) {
+
+            while (resultSet.next()) {
+                String pageName = resultSet.getString("page_name");
+                PageData pageData = new PageData(pageName);
+                pageDataList.add(pageData);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return pageDataList;
+    }
+
+    public static List<PageData> fetchDataForPageName(String pageName) throws SQLException {
+        List<PageData> pageDataList = new ArrayList<>();
+        try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+             PreparedStatement statement = connection.prepareStatement("SELECT * FROM crawled_data WHERE page_name = ?")) {
+
+            statement.setString(1, pageName);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    String fetchedPageName = resultSet.getString("page_name");
+                    String linkUrl = resultSet.getString("link_url");
+                    String linkType = resultSet.getString("link_type");
+                    int status = resultSet.getInt("status");
+                    PageData pageData = new PageData(fetchedPageName, status, linkUrl, linkType);
+                    pageDataList.add(pageData);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            throw e; // Re-throw the exception to handle it elsewhere if needed
+        }
+        return pageDataList;
+    }
 }
-

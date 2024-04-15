@@ -1,5 +1,6 @@
 package webcrawler.newUI;
 
+import com.gargoylesoftware.htmlunit.BrowserVersion;
 import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
 import com.gargoylesoftware.htmlunit.WebClient;
 import com.gargoylesoftware.htmlunit.html.DomElement;
@@ -10,12 +11,20 @@ import com.gargoylesoftware.htmlunit.html.HtmlImage;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.Scene;
+import javafx.scene.chart.PieChart;
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
+import javafx.scene.control.Tab;
+import javafx.scene.control.TabPane;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
@@ -29,8 +38,11 @@ import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
@@ -42,31 +54,59 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.select.Elements;
 
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
-import static webcrawler.newUI.DatabaseCall.*;
+import static webcrawler.newUI.DatabaseCall.fetchDataForImageSizeTableView;
+import static webcrawler.newUI.DatabaseCall.fetchDataForImagesTableView;
+import static webcrawler.newUI.DatabaseCall.fetchDataForLinksTableView;
+import static webcrawler.newUI.DatabaseCall.fetchDataForLinksTableViewForPageName;
+import static webcrawler.newUI.DatabaseCall.fetchDataForLinksTableViewForStatus;
+import static webcrawler.newUI.DatabaseCall.fetchDataForMetaTextTableView;
+import static webcrawler.newUI.DatabaseCall.fetchDataForPageName;
+import static webcrawler.newUI.DatabaseCall.fetchDataForTableView1;
+import static webcrawler.newUI.DatabaseCall.fetchDataForTableView2;
+import static webcrawler.newUI.DatabaseCall.fetchDataForTableView3;
+import static webcrawler.newUI.DatabaseCall.fetchDataFromDatabase;
+import static webcrawler.newUI.DatabaseCall.fetchHeaderTagsFromDatabase;
+import static webcrawler.newUI.DatabaseCall.fetchImageDataFromDatabase;
+import static webcrawler.newUI.DatabaseCall.fetchLoadTimeFromDatabase;
+import static webcrawler.newUI.DatabaseCall.fetchMetaDataFromDatabase;
+import static webcrawler.newUI.DatabaseCall.fetchRepeatedWordsFromDatabase;
+import static webcrawler.newUI.DatabaseCall.getDistinctPageData;
+import static webcrawler.newUI.DatabaseCall.insertCrawledData;
+import static webcrawler.newUI.DatabaseCall.insertImageData;
+import static webcrawler.newUI.DatabaseCall.insertSEOData;
+import static webcrawler.newUI.DatabaseCall.retrieveCrawledImageDataFromDatabase;
+import static webcrawler.newUI.DatabaseCall.retrieveCrawledSeoDataFromDatabase;
+import static webcrawler.newUI.DatabaseCall.retrieveLinkDataFromDatabase;
+import static webcrawler.newUI.DatabaseCall.retrieveSeoAnalysisDataFromDatabase;
 
 public class WebCrawlingApp extends Application {
 
     private final ProgressBar progressBar = new ProgressBar();
     private final CountDownLatch latch = new CountDownLatch(3);
+
+    Button exportButton = new Button();
 
     @Override
     public void start(Stage primaryStage) {
@@ -83,24 +123,13 @@ public class WebCrawlingApp extends Application {
         Button startButton = new Button("Start Crawling");
         startButton.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 10 20;");
 
-        Button exportButton = new Button("Export Results");
+        exportButton = new Button("Export Results");
         exportButton.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 10 20;");
-
-
-
 
         progressBar.setVisible(false);
         progressBar.setStyle("-fx-pref-width: 200px; -fx-pref-height: 20px; -fx-background-color: #d3d3d3; -fx-accent: #00ff00;"); // Set width, height, and color
 
 
-        startButton.setOnAction(event -> {
-            String url = urlTextField.getText().trim();
-            if (!url.isEmpty()) {
-                progressBar.setVisible(true);
-                disableButtons(startButton);
-                startCrawling(url, progressBar);
-            }
-        });
 
         exportButton.setOnAction(event -> {
             try {
@@ -125,15 +154,46 @@ public class WebCrawlingApp extends Application {
 
         // Creating VBoxs
         VBox leftTopVBox = createBorderedVBox(1200, 300);
-        VBox leftBottomVBox = createBorderedVBox(1200, 300);
+        VBox leftBottomVBox = createBorderedVBox(800, 300);
         VBox rightTopVBox = createBorderedVBox(300, 550);
-        VBox rightBottomVBox = createBorderedVBox(300, 550);
+        VBox rightBottomVBox = createBorderedVBox(800, 550);
 
         // Applying background color and effects
         leftTopVBox.setStyle("-fx-background-color: #F4F4F4; -fx-background-radius: 10; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.2), 10, 0, 0, 0);-fx-padding: 5;");
         leftBottomVBox.setStyle("-fx-background-color: #F4F4F4; -fx-background-radius: 10; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.2), 10, 0, 0, 0);-fx-padding: 5;");
         rightTopVBox.setStyle("-fx-background-color: #F4F4F4; -fx-background-radius: 10; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.2), 10, 0, 0, 0);-fx-padding: 5;");
         rightBottomVBox.setStyle("-fx-background-color: #F4F4F4; -fx-background-radius: 10; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.2), 10, 0, 0, 0);-fx-padding: 5;");
+
+        // Create the TabPane
+        TabPane tabPane = new TabPane();
+        tabPane.setPrefSize(600, 300);
+
+        // Disable closing of tabs
+        tabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
+
+        // Create tabs and their respective content
+        Tab contentTypeTab = new Tab("Content Type");
+        Tab metaTab = new Tab("Meta");
+        Tab h1Tab = new Tab("H1");
+        Tab imageTab = new Tab("Image");
+        Tab pageLoadTimeTab = new Tab("Page Load Time");
+        Tab wordCountTab = new Tab("Repeated Word Count");
+        Tab links = new Tab("Crawl Links");
+
+        // Add content to tabs (you can add your specific content here)
+        // For demonstration, adding a label with the tab name
+        contentTypeTab.setContent(new Label("Content Type Content"));
+        metaTab.setContent(new Label("Meta Content"));
+        h1Tab.setContent(new Label("H1 Content"));
+        imageTab.setContent(new Label("Image Content"));
+        pageLoadTimeTab.setContent(new Label("Page Load Time Content"));
+        wordCountTab.setContent(new Label("Word Count Content"));
+        links.setContent(new Label("Crawl Links Content"));
+
+
+        // Add tabs to the TabPane
+        tabPane.getTabs().addAll(contentTypeTab, metaTab, h1Tab, imageTab, pageLoadTimeTab, wordCountTab,links);
+
 
         // Creating a TreeView
 
@@ -162,7 +222,7 @@ public class WebCrawlingApp extends Application {
         rightTopVBox.getChildren().add(treeView);
 
         // Create custom cell factory for the TreeView
-        treeView.setCellFactory(tree -> new TreeCell<String>() {
+        treeView.setCellFactory(tree -> new TreeCell<>() {
             @Override
             protected void updateItem(String item, boolean empty) {
                 super.updateItem(item, empty);
@@ -289,6 +349,147 @@ public class WebCrawlingApp extends Application {
 
         tableViewMetaText.getColumns().addAll(imageUrlColMeta, metaTextCol);
 
+
+        // Creating a TableView for displaying SEO data
+        TableView<SEODataForCrawling> tableViewSEOCrawlingDetails = new TableView<>();
+        TableColumn<SEODataForCrawling, String> pageNameCol = new TableColumn<>("Page Name");
+        TableColumn<SEODataForCrawling, String> contentTypeCol = new TableColumn<>("Content Type");
+        TableColumn<SEODataForCrawling, String> pageUrlCol = new TableColumn<>("Page URL");
+
+        pageNameCol.setCellValueFactory(new PropertyValueFactory<>("pageName"));
+        contentTypeCol.setCellValueFactory(new PropertyValueFactory<>("contentType"));
+        pageUrlCol.setCellValueFactory(new PropertyValueFactory<>("pageUrl"));
+
+        tableViewSEOCrawlingDetails.getColumns().addAll(pageNameCol, contentTypeCol, pageUrlCol);
+
+        // Add the TableView to the leftTopVBox
+        leftTopVBox.getChildren().add(tableViewSEOCrawlingDetails);
+
+
+        // Create a TableView to display PageData
+        TableView<PageData> tableView = new TableView<>();
+
+        // Create TableColumn instances with PropertyValueFactory
+        TableColumn<PageData, String> pageNameLinks = new TableColumn<>("Page Name");
+
+        // Set cell value factories using PropertyValueFactory
+        pageNameLinks.setCellValueFactory(new PropertyValueFactory<>("pageName"));
+        // Add columns to the TableView
+        tableView.getColumns().add(pageNameLinks);
+
+        // Create a TableView for the links
+        TableView<PageData> linkTableView = new TableView<>();
+
+        // Define columns for the table
+        TableColumn<PageData, String> linkUrlCol = new TableColumn<>("Link URL");
+        TableColumn<PageData, String> linkTypeCol = new TableColumn<>("Link Type");
+        TableColumn<PageData, Integer> statusCol = new TableColumn<>("Status");
+
+        // Set cell value factories to extract data from PageData objects
+        linkUrlCol.setCellValueFactory(new PropertyValueFactory<>("linkUrl"));
+        linkTypeCol.setCellValueFactory(new PropertyValueFactory<>("linkType"));
+        statusCol.setCellValueFactory(new PropertyValueFactory<>("status"));
+
+        // Add columns to the table
+        linkTableView.getColumns().addAll(linkUrlCol, linkTypeCol, statusCol);
+
+
+        // Creating a TableView for displaying SEO data
+        TableView<SEODataForCrawling> tableViewSEOCrawlingDetailss = new TableView<>();
+        TableColumn<SEODataForCrawling, String> pageNameCols = new TableColumn<>("Page Name");
+        TableColumn<SEODataForCrawling, String> contentTypeCols = new TableColumn<>("Content Type");
+        TableColumn<SEODataForCrawling, String> pageUrlCols = new TableColumn<>("Page URL");
+
+        pageNameCols.setCellValueFactory(new PropertyValueFactory<>("pageName"));
+        contentTypeCols.setCellValueFactory(new PropertyValueFactory<>("contentType"));
+        pageUrlCols.setCellValueFactory(new PropertyValueFactory<>("pageUrl"));
+
+        tableViewSEOCrawlingDetailss.getColumns().addAll(pageNameCols, contentTypeCols, pageUrlCols);
+
+        // Creating a TableView for displaying meta data
+        TableView<String> tableViewMeta = new TableView<>();
+        TableColumn<String, String> metaTagsColumn = new TableColumn<>("Meta Tags");
+
+        // Set up the column to display meta tags
+        metaTagsColumn.setCellValueFactory(data -> new SimpleStringProperty(data.getValue()));
+
+        // Add the column to the table
+        tableViewMeta.getColumns().add(metaTagsColumn);
+
+        // Set up the table to stretch to fill the available space
+        tableViewMeta.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+
+        // Creating a TableView for displaying H1 (header_tags) data
+        TableView<String> tableViewH1 = new TableView<>();
+        TableColumn<String, String> headerTagsCol = new TableColumn<>("Header Tags");
+
+        // Configure the column to display header_tags
+        headerTagsCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue()));
+
+        // Add the column to the table
+        tableViewH1.getColumns().add(headerTagsCol);
+
+        // Optionally, set a preferred width for the column
+        headerTagsCol.prefWidthProperty().bind(tableViewH1.widthProperty().multiply(0.9));
+
+        // Optionally, enable column resizing
+        headerTagsCol.setResizable(true);
+
+        // Creating a TableView for displaying repeated words data
+        TableView<String> tableViewRepeatedWords = new TableView<>();
+        TableColumn<String, String> repeatedWordsCol = new TableColumn<>("Repeated Words");
+
+        // Configure the column to display repeatedWords
+        repeatedWordsCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue()));
+
+        // Add the column to the table
+        tableViewRepeatedWords.getColumns().add(repeatedWordsCol);
+
+        // Optionally, set a preferred width for the column
+        repeatedWordsCol.prefWidthProperty().bind(tableViewRepeatedWords.widthProperty().multiply(0.9));
+
+        // Optionally, enable column resizing
+        repeatedWordsCol.setResizable(true);
+
+
+
+        // Creating a TableView for displaying load time data
+        TableView<String> tableViewLoadTime = new TableView<>();
+        TableColumn<String, String> loadTimeCol = new TableColumn<>("Load Time");
+
+        // Configure the column to display loadTime
+        loadTimeCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue()));
+
+        // Add the column to the table
+        tableViewLoadTime.getColumns().add(loadTimeCol);
+
+        // Optionally, set a preferred width for the column
+        loadTimeCol.prefWidthProperty().bind(tableViewLoadTime.widthProperty().multiply(0.9));
+
+        // Optionally, enable column resizing
+        loadTimeCol.setResizable(true);
+
+        // Create the TableView for displaying image data
+        TableView<ImageData> imageTable = new TableView<>();
+
+        // Create columns for the table
+        TableColumn<ImageData, String> pageUrl = new TableColumn<>("Page URL");
+        TableColumn<ImageData, String> pageNameForImage = new TableColumn<>("Page Name");
+        TableColumn<ImageData, String> imageUrl = new TableColumn<>("Image URL");
+        TableColumn<ImageData, String> imageSizes = new TableColumn<>("Image Size");
+        TableColumn<ImageData, String> altTextCol = new TableColumn<>("Alt Text");
+
+        // Set cell value factories to extract data from ImageData objects
+        pageUrl.setCellValueFactory(new PropertyValueFactory<>("pageUrl"));
+        pageNameForImage.setCellValueFactory(new PropertyValueFactory<>("pageName"));
+        imageUrl.setCellValueFactory(new PropertyValueFactory<>("imageUrl"));
+        imageSizes.setCellValueFactory(new PropertyValueFactory<>("imageSize"));
+        altTextCol.setCellValueFactory(new PropertyValueFactory<>("altText"));
+
+        // Add columns to the table
+        imageTable.getColumns().addAll(pageUrl, pageNameForImage, imageUrl, imageSizes, altTextCol);
+
+
         // Enable selection in the TableView
         tableView1.setEditable(true);
         tableView2.setEditable(true);
@@ -299,6 +500,7 @@ public class WebCrawlingApp extends Application {
         tableViewImages.setEditable(true);
         tableViewImageSize.setEditable(true);
         tableViewMetaText.setEditable(true);
+        tableView.setEditable(true);
 
         tableView1.getSelectionModel().setCellSelectionEnabled(true);
         tableView2.getSelectionModel().setCellSelectionEnabled(true);
@@ -309,6 +511,7 @@ public class WebCrawlingApp extends Application {
         tableViewImages.getSelectionModel().setCellSelectionEnabled(true);
         tableViewImageSize.getSelectionModel().setCellSelectionEnabled(true);
         tableViewMetaText.getSelectionModel().setCellSelectionEnabled(true);
+        tableView.getSelectionModel().setCellSelectionEnabled(true);
 
         // Applying drop shadow effect
         DropShadow dropShadow = new DropShadow();
@@ -316,6 +519,11 @@ public class WebCrawlingApp extends Application {
         dropShadow.setRadius(10);
         dropShadow.setOffsetX(0);
         dropShadow.setOffsetY(0);
+
+        tabPane.setEffect(dropShadow);
+
+        // Add the TabPane to the leftBottomVBox
+        leftBottomVBox.getChildren().add(tabPane);
 
         // Applying CSS to the VBoxes
         leftTopVBox.setBackground(vboxBackground);
@@ -347,6 +555,13 @@ public class WebCrawlingApp extends Application {
         root.add(leftBottomVBox, 0, 2);
         root.add(rightBottomVBox, 1, 2);
 
+
+        // Set TabPane to fill height and width
+        tabPane.setPrefHeight(Region.USE_COMPUTED_SIZE);
+        tabPane.setPrefWidth(Region.USE_COMPUTED_SIZE);
+        tabPane.setMaxHeight(Double.MAX_VALUE);
+        tabPane.setMaxWidth(Double.MAX_VALUE);
+
         // Creating the scene
         Scene scene = new Scene(root, 1000, 700);
 
@@ -355,6 +570,44 @@ public class WebCrawlingApp extends Application {
 
         // Displaying the stage
         primaryStage.show();
+
+        // Start a background thread to continuously fetch data from the database
+        startButton.setOnAction(event -> {
+            String url = urlTextField.getText().trim();
+            if (!url.isEmpty()) {
+                progressBar.setVisible(true);
+                disableButtons(startButton);
+                startCrawling(url, progressBar);
+
+                // Start a background thread to continuously fetch data from the database
+                ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
+                executorService.scheduleAtFixedRate(() -> {
+                    try {
+                        List<SEODataForCrawling> crawledSeoData = retrieveCrawledSeoDataFromDatabase();
+                        Platform.runLater(() ->{
+                            tableViewSEOCrawlingDetails.getItems().clear();
+                            tableViewSEOCrawlingDetails.getItems().addAll(crawledSeoData);
+                        });
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
+                }, 0, 5, TimeUnit.SECONDS);
+            }
+        });
+
+        // Start a background thread to continuously fetch data from the database
+        ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
+        executorService.scheduleAtFixedRate(() -> {
+            try {
+                List<SEODataForCrawling> crawledSeoData = retrieveCrawledSeoDataFromDatabase();
+                Platform.runLater(() ->{
+                    tableViewSEOCrawlingDetails.getItems().clear();
+                    tableViewSEOCrawlingDetails.getItems().addAll(crawledSeoData);
+                });
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }, 0, 2, TimeUnit.SECONDS);
 
         // Handle TreeView item selection
         treeView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
@@ -399,14 +652,141 @@ public class WebCrawlingApp extends Application {
             }
         });
 
+        if (!progressBar.isVisible()) {
+            // Event handler for URL column click
+            tableViewSEOCrawlingDetails.setOnMouseClicked(event -> {
+                if (event.getClickCount() == 1 && !tableViewSEOCrawlingDetails.getSelectionModel().isEmpty()) {
+                    // Get the selected item
+                    SEODataForCrawling selectedItem = tableViewSEOCrawlingDetails.getSelectionModel().getSelectedItem();
+                    if (selectedItem != null) {
+                        String selectedUrl = selectedItem.getPageUrl();
+                        try {
+                            // Fetch data from seo_analysis table based on the selected URL
+                            List<SEODataForCrawling> seoDataForCrawlings = fetchDataFromDatabase(selectedUrl);
+                            // Clear the existing items in the SEO table
+                            tableViewSEOCrawlingDetailss.getItems().clear();
+                            // Add the fetched data to the SEO table
+                            tableViewSEOCrawlingDetailss.getItems().addAll(seoDataForCrawlings);
+                            // Set the content of the SEO tab to the SEO table
+                            contentTypeTab.setContent(tableViewSEOCrawlingDetailss);
+
+                            // Fetch meta data based on the selected URL
+                            List<String> metaDataList = fetchMetaDataFromDatabase(selectedUrl);
+                            // Clear the existing items in the meta table
+                            tableViewMeta.getItems().clear();
+                            // Add the fetched data to the meta table
+                            tableViewMeta.getItems().addAll(metaDataList);
+                            // Set the content of the meta tab to the meta table
+                            metaTab.setContent(tableViewMeta);
+
+                            // Fetch H1 (header_tags) data from seo_analysis table based on the selected URL
+                            List<String> headerTagsList = fetchHeaderTagsFromDatabase(selectedUrl);
+                            // Clear the existing items in the H1 (header_tags) table
+                            tableViewH1.getItems().clear();
+                            // Add the fetched H1 (header_tags) data to the H1 (header_tags) table
+                            tableViewH1.getItems().addAll(headerTagsList);
+                            // Set the content of the H1 (header_tags) tab to the H1 (header_tags) table
+                            h1Tab.setContent(tableViewH1);
+
+                            // Fetch repeated words data from seo_analysis table based on the selected URL
+                            List<String> repeatedWordsList = fetchRepeatedWordsFromDatabase(selectedUrl);
+                            // Clear the existing items in the repeated words table
+                            tableViewRepeatedWords.getItems().clear();
+                            // Add the fetched repeated words data to the repeated words table
+                            tableViewRepeatedWords.getItems().addAll(repeatedWordsList);
+                            // Set the content of the repeated words tab to the repeated words table
+                            wordCountTab.setContent(tableViewRepeatedWords);
+
+                            // Fetch load time data from seo_analysis table based on the selected URL
+                            List<String> loadTimeList = fetchLoadTimeFromDatabase(selectedUrl);
+                            // Clear the existing items in the load time table
+                            tableViewLoadTime.getItems().clear();
+                            // Add the fetched load time data to the load time table
+                            tableViewLoadTime.getItems().addAll(loadTimeList);
+                            // Set the content of the load time tab to the load time table
+                            pageLoadTimeTab.setContent(tableViewLoadTime);
+
+                            List<ImageData> imageDataList = fetchImageDataFromDatabase(selectedUrl);
+                            imageTable.getItems().clear(); // Clear existing items
+                            imageTable.getItems().addAll(imageDataList); // Add fetched data to the table
+
+                            imageTab.setContent(imageTable);
+
+                            String url = selectedItem.getPageUrl();
+                            VBox vBox = displayGraph(url);
+                            rightBottomVBox.getChildren().clear();
+                            rightBottomVBox.getChildren().add(vBox);
+
+                        } catch (SQLException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+                }
+            });
+        }
+        // Add a listener to the selection model property of the TabPane
+        tabPane.getSelectionModel().selectedItemProperty().addListener((obs, oldTab, newTab) -> {
+            if (newTab != null && newTab.getText().equals("Crawl Links")) {
+                if (!progressBar.isVisible()) { // Check if progressBar is not visible
+                    // Fetching distinct page data from the database
+                    List<PageData> distinctPageData = getDistinctPageData();
+
+                    if (!linkTableView.getItems().isEmpty()){
+                        linkTableView.getItems().clear();
+                    }
+                    // Clear existing items in the tableViewLinks
+                    tableView.getItems().clear();
+
+                    // Adding fetched data to the tableViewLinks
+                    for (PageData pageData : distinctPageData) {
+                        PageData data = new PageData(pageData.getPageName());
+                        tableView.getItems().add(data);
+                    }
+
+                    // Set the content of the "Links" tab to the tableViewLinks
+                    links.setContent(tableView);
+                }
+            }
+        });
+
+        tableView.getSelectionModel().selectedItemProperty().addListener((obs, oldPage, newPage) -> {
+            if (newPage != null) {
+                String selectedPageName = newPage.getPageName();
+                try {
+                    // Query the database using the selected page name
+                    List<PageData> pageDataList = fetchDataForPageName(selectedPageName);
+
+                    // Clear existing items in the linkTableView
+                    linkTableView.getItems().clear();
+
+                    // Add fetched data to the linkTableView
+                    linkTableView.getItems().addAll(pageDataList);
+                    links.setContent(linkTableView);
+                } catch (SQLException e) {
+                    e.printStackTrace(); // Handle database query errors
+                }
+            }
+        });
+
+
+/*        tableViewSEOCrawlingDetails.setOnMouseClicked(event -> {
+            if (!tableViewSEOCrawlingDetails.getSelectionModel().isEmpty() && event.getClickCount() == 1) {
+                SEODataForCrawling selectedData = tableViewSEOCrawlingDetails.getSelectionModel().getSelectedItem();
+                String url = selectedData.getPageUrl();
+                VBox vBox = displayGraph(url);
+                rightBottomVBox.getChildren().clear();
+                rightBottomVBox.getChildren().add(vBox);
+            }
+        });*/
+
     }
     private void startCrawling(String url, ProgressBar progressBar) {
         Task<Void> task = new Task<>() {
             @Override
             protected Void call() {
                 try {
-                    crawlLinks(url, progressBar);
                     crawlSEO(url, progressBar);
+                    crawlLinks(url, progressBar);
                     crawlImages(url, progressBar);
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -420,7 +800,7 @@ public class WebCrawlingApp extends Application {
         thread.start();
     }
 
-    private void crawlLinks(String url, ProgressBar progressBar) {
+   /* private void crawlLinks(String url, ProgressBar progressBar) {
         Task<Void> task = new Task<>() {
             @Override
             protected Void call() {
@@ -529,7 +909,6 @@ public class WebCrawlingApp extends Application {
                                                     URL basePageUrl = new URL(absoluteUrlString);
                                                     absolutePageUrl = new URL(basePageUrl, pageLinkHref);
                                                 }
-
                                                 String absolutePageUrlString = absolutePageUrl.toString();
                                                 insertLinkData(absolutePageUrlString, pageLinkText, pageTitle, String.valueOf(statusCode)); // Insert full URL, page title, and status into the database
                                             }
@@ -563,7 +942,6 @@ public class WebCrawlingApp extends Application {
         thread.start();
     }
 
-
     private static final Set<String> excludedDomains = new HashSet<>(Arrays.asList(
             "facebook.com", "twitter.com", "instagram.com", "youtube.com", "github.com",
             "veppar.com", "behance.net", "dribbble.com", "discord.com", "twitter.com",
@@ -595,7 +973,100 @@ public class WebCrawlingApp extends Application {
             return false;
         }
     }
+*/
 
+    public void crawlLinks(String url, ProgressBar progressBar) {
+        Task<Void> task = new Task<>() {
+            @Override
+            protected Void call() {
+                progressBar.setVisible(true);
+                List<String> crawledUrls = new ArrayList<>();
+                String domain = extractDomain(url);
+                crawlLinksRecursive(url, domain, crawledUrls);
+                decrementActiveTasks();
+                return null;
+            }
+        };
+
+        Thread thread = new Thread(task);
+        thread.setDaemon(true);
+        thread.start();
+
+    }
+
+    private static void crawlLinksRecursive(String url, String domain, List<String> crawledUrls) {
+        if (!crawledUrls.contains(url)) {
+            crawledUrls.add(url);
+            try (final WebClient webClient = new WebClient(BrowserVersion.CHROME)) {
+                webClient.getOptions().setCssEnabled(false);
+                webClient.getOptions().setJavaScriptEnabled(false);
+
+                final HtmlPage page = webClient.getPage(url);
+                final List<HtmlAnchor> anchors = page.getAnchors();
+
+                for (HtmlAnchor anchor : anchors) {
+                    try {
+                        String href = anchor.getHrefAttribute();
+                        String absoluteUrl = getAbsoluteUrl(url, href);
+
+                        if (!crawledUrls.contains(absoluteUrl)) {
+                            int status = getLinkStatus(absoluteUrl);
+                            String pageName = page.getTitleText();
+                            if (isSameDomain(absoluteUrl, domain)) {
+                                insertCrawledData(pageName, url, absoluteUrl, "Internal Link", status);
+                                crawlLinksRecursive(absoluteUrl, domain, crawledUrls);
+                            } else {
+                                insertCrawledData(pageName, url, absoluteUrl, "External Link", status);
+                            }
+                        }
+                    } catch (FailingHttpStatusCodeException e) {
+                        // Log the exception or handle it as per your requirement
+                        System.err.println("Failed to fetch URL: " + e.getStatusMessage()+ ", Status Code: " + e.getStatusCode());
+                    }
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+    private static String extractDomain(String url) {
+        try {
+            URL u = new URL(url);
+            return u.getHost();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "";
+        }
+    }
+
+    private static boolean isSameDomain(String url, String domain) {
+        return url.contains(domain);
+    }
+
+    private static String getAbsoluteUrl(String baseUrl, String relativeUrl) {
+        try {
+            URL base = new URL(baseUrl);
+            URL absolute = new URL(base, relativeUrl);
+            return absolute.toString();
+        } catch (IOException e) {
+            e.printStackTrace();
+            return "";
+        }
+    }
+
+    private static int getLinkStatus(String link) {
+        try {
+            HttpURLConnection connection = (HttpURLConnection) new URL(link).openConnection();
+            connection.setRequestMethod("HEAD");
+            connection.connect();
+            int status = connection.getResponseCode();
+            connection.disconnect();
+            return status;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return 0; // Return an invalid status code for connection errors
+        }
+    }
 
     private synchronized void decrementActiveTasks() {
         latch.countDown(); // Decrease the latch count
@@ -641,10 +1112,9 @@ public class WebCrawlingApp extends Application {
                             }
                         }
                     }
+                    decrementActiveTasks();
                 } catch (Exception e) {
                     throw new RuntimeException(e);
-                } finally {
-                    Platform.runLater(() -> progressBar.setVisible(false)); // Update progress bar visibility on the JavaFX application thread
                 }
                 return null;
             }
@@ -683,7 +1153,12 @@ public class WebCrawlingApp extends Application {
             }
         }
         try {
-            insertSEOData(url, title, metaTagsBuilder.toString(), headerTagsBuilder.toString(), contentType); // Pass content type
+            // Fetch page load time
+            String pageLoadTime = getPageLoadTime(url);
+
+            // Count repeated words
+            String repeatedWords = countRepeatedWords(url);
+            insertSEOData(url, title, metaTagsBuilder.toString(), headerTagsBuilder.toString(), contentType,pageLoadTime,repeatedWords); // Pass content type
         } catch (SQLException e) {
             System.err.println("Error saving SEO data to the database: " + e.getMessage());
             // Handle the error as needed
@@ -697,15 +1172,21 @@ public class WebCrawlingApp extends Application {
             protected Void call() {
                 progressBar.setVisible(true);
                 try (final WebClient webClient = createWebClient()) {
-                    HtmlPage page = webClient.getPage(url);
+                    HtmlPage mainPage = webClient.getPage(url);
                     webClient.waitForBackgroundJavaScript(10000); // Wait for JavaScript to execute
 
-                    List<String> links = extractLinks(page); // Extract links from the main page
+                    // Crawl images from the main page
+                    crawlImagesHelper(url, mainPage, webClient);
 
-                    // Iterate over the links and crawl images
+                    // Extract links from the main page
+                    List<String> links = extractLinks(mainPage);
+
+                    // Iterate over the links and crawl images from linked pages
                     for (String link : links) {
                         try {
-                            crawlImagesHelper(link, webClient);
+                            HtmlPage linkedPage = webClient.getPage(link); // Fetch the linked page
+                            webClient.waitForBackgroundJavaScript(10000); // Wait for JavaScript to execute on the linked page
+                            crawlImagesHelper(linkedPage.getUrl().toString(), linkedPage, webClient); // Crawl images from the linked page
                         } catch (FailingHttpStatusCodeException e) {
                             if (e.getStatusCode() == 404) {
                                 System.err.println("404 Not Found error for URL: " + link);
@@ -728,32 +1209,27 @@ public class WebCrawlingApp extends Application {
         thread.start();
     }
 
-    private void crawlImagesHelper(String url, WebClient webClient) throws IOException {
+    private void crawlImagesHelper(String pageUrl, HtmlPage page, WebClient webClient) {
         // Check if the URL has been visited already
-        if (visitedUrls.contains(url)) {
+        if (visitedUrls.contains(pageUrl)) {
             return;
         }
         // Mark the URL as visited
-        visitedUrls.add(url);
-
-
-
-        // Get the page content
-        HtmlPage page = webClient.getPage(url);
-        webClient.waitForBackgroundJavaScript(10000); // Wait for JavaScript to execute
+        visitedUrls.add(pageUrl);
 
         // Extract images from the current page
         List<HtmlImage> images = page.getByXPath("//img");
+        webClient.waitForBackgroundJavaScript(10000); // Wait for JavaScript to execute
 
         Platform.runLater(() -> {
             for (HtmlImage image : images) {
                 String imageUrl = image.getAttribute("src");
                 String imageAltText = image.getAttribute("alt");
-                String imageName = extractImageName(url); // Extract image name from URL
+                String pageName = extractPageName(pageUrl); // Extract page name from URL
                 try {
                     int imageSize = getImageSize(imageUrl);
                     String imageSizeStr = String.format("%.2f", (double) imageSize / 1024) + " KB"; // Convert size to KB and format as string
-                    insertImageData(imageName, url, imageUrl, imageAltText, imageSizeStr);
+                    insertImageData(pageName, pageUrl, imageUrl, imageAltText, imageSizeStr);
                 } catch (SQLException | IOException e) {
                     System.err.println("Error saving image data to the database: " + e.getMessage());
                     // Handle the error as needed
@@ -762,19 +1238,27 @@ public class WebCrawlingApp extends Application {
         });
     }
 
-    private String extractImageName(String imageUrl) {
-        // Example: Extract the last segment of the URL path
+    private String extractPageName(String pageUrl) {
         try {
-            URL urlObj = new URL(imageUrl);
+            URL urlObj = new URL(pageUrl);
             String path = urlObj.getPath();
-            // Extract the last segment of the path as the image name
+            // Remove any leading and trailing slashes
+            path = path.replaceAll("^/|/$", "");
+            // Extract the last segment of the path as the page name
             String[] segments = path.split("/");
-            return segments[segments.length - 1];
+            String pageName = segments[segments.length - 1];
+            // Remove file extension, if any
+            int dotIndex = pageName.lastIndexOf('.');
+            if (dotIndex != -1) {
+                pageName = pageName.substring(0, dotIndex);
+            }
+            return pageName;
         } catch (MalformedURLException e) {
             e.printStackTrace();
-            return "Unknown"; // Return a default image name if extraction fails
+            return "Unknown"; // Return a default page name if extraction fails
         }
     }
+
     private List<String> extractLinks(HtmlPage page) {
         List<String> links = new ArrayList<>();
         DomNodeList<DomElement> anchorTags = page.getElementsByTagName("a");
@@ -803,134 +1287,134 @@ public class WebCrawlingApp extends Application {
         return conn.getContentLength();
     }
 
+    private boolean isTelephoneLink(String link) {
+        return link.startsWith("tel:");
+    }
+
     private void exportToExcel() throws SQLException {
         System.setProperty("org.apache.poi.util.POILogger", "org.apache.poi.util.SimpleLogger");
 
         Workbook workbook = new XSSFWorkbook();
 
-        // Styles for title cells
-        CellStyle titleStyle = workbook.createCellStyle();
-        titleStyle.setAlignment(HorizontalAlignment.CENTER);
-        titleStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
-        titleStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
-
-        // Create a sheet
-        Sheet sheet = workbook.createSheet("Crawling Details");
-
-        // Title for link data section
-        Row linkTitleRow = sheet.createRow(0);
-        Cell linkTitleCell = linkTitleRow.createCell(0);
-        linkTitleCell.setCellValue("Link Data");
-        linkTitleCell.setCellStyle(titleStyle);
-        sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 3)); // Merge cells for title
-        int currentRow = 2; // Start from row 2 for link data
-
-        // Populate data from the link_crawled_data table
+        // Export Link Data
+        Sheet linkSheet = workbook.createSheet("Link Data");
+        int linkStartRow = createTitleRow(linkSheet, "Link Data", LinkDataForExcel.class);
         List<LinkDataForExcel> linkDataList = retrieveLinkDataFromDatabase();
-        currentRow = populateData(sheet, linkDataList, currentRow);
+        populateData(linkSheet, linkDataList, linkStartRow);
 
-        // Title for SEO analysis section
-        Row seoTitleRow = sheet.createRow(currentRow);
-        Cell seoTitleCell = seoTitleRow.createCell(0);
-        seoTitleCell.setCellValue("SEO Analysis");
-        seoTitleCell.setCellStyle(titleStyle);
-        sheet.addMergedRegion(new CellRangeAddress(currentRow, currentRow, 0, 3)); // Merge cells for title
-        currentRow += 2; // Start from next row for SEO analysis
-
-        // Populate data from the seo_analysis table
+        // Export SEO Analysis
+        Sheet seoSheet = workbook.createSheet("SEO Analysis");
+        int seoStartRow = createTitleRow(seoSheet, "SEO Analysis", SeoAnalysisData.class);
         List<SeoAnalysisData> seoDataList = retrieveSeoAnalysisDataFromDatabase();
-        currentRow = populateData(sheet, seoDataList, currentRow);
+        populateData(seoSheet, seoDataList, seoStartRow);
 
-        // Title for crawled images section
-        Row imagesTitleRow = sheet.createRow(currentRow);
-        Cell imagesTitleCell = imagesTitleRow.createCell(0);
-        imagesTitleCell.setCellValue("Crawled Images");
-        imagesTitleCell.setCellStyle(titleStyle);
-        sheet.addMergedRegion(new CellRangeAddress(currentRow, currentRow, 0, 5)); // Merge cells for title
-        currentRow += 2; // Start from next row for crawled images
-
-        // Populate data from the crawled_images table
+        // Export Crawled Images
+        Sheet imageSheet = workbook.createSheet("Crawled Images");
+        int imageStartRow = createTitleRow(imageSheet, "Crawled Images", CrawledImageData.class);
         List<CrawledImageData> imageDataList = retrieveCrawledImageDataFromDatabase();
-        currentRow = populateData(sheet, imageDataList, currentRow);
+        populateData(imageSheet, imageDataList, imageStartRow);
+
 
         // Autosize columns
-        for (int i = 0; i < 6; i++) {
-            sheet.autoSizeColumn(i);
+        for (Sheet sheet : workbook) {
+            for (int i = 0; i < 6; i++) {
+                sheet.autoSizeColumn(i);
+            }
         }
 
-        // Get the path to the user's download folder
-        String userHomeFolder = System.getProperty("user.home");
-        Path downloadFolderPath = Paths.get(userHomeFolder, "Downloads");
+        // Show save file dialog
+        File selectedFile = showSaveFileDialog();
+        if (selectedFile != null) {
+            String filePath = selectedFile.getAbsolutePath();
 
-        // Create the download folder if it doesn't exist
-        try {
-            Files.createDirectories(downloadFolderPath);
-        } catch (IOException e) {
-            e.printStackTrace();
-            // Handle the exception
-        }
-
-        // Construct the file path for the Excel file in the download folder
-        String filePath = downloadFolderPath.resolve("web_crawling_details.xlsx").toString();
-
-        // Write the workbook content to the Excel file
-        try (FileOutputStream fileOut = new FileOutputStream(filePath)) {
-            workbook.write(fileOut);
-        } catch (IOException e) {
-            e.printStackTrace();
-            // Handle the exception
-        } finally {
-            try {
-                workbook.close();
+            // Write the workbook content to the Excel file
+            try (FileOutputStream fileOut = new FileOutputStream(filePath)) {
+                workbook.write(fileOut);
             } catch (IOException e) {
                 e.printStackTrace();
+                // Handle the exception
+            } finally {
+                try {
+                    workbook.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         }
     }
 
-    // Method to populate data into the sheet
-    private int populateData(Sheet sheet, List<? extends Object> dataList, int startRow) {
-        int currentRow = startRow;
+    // Add this method to your class
+    private File showSaveFileDialog() {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Save Excel File");
+        fileChooser.setInitialFileName("web_crawling_details.xlsx");
 
-        // Adding header row
-        Row headerRow = sheet.createRow(currentRow++);
-        if (!dataList.isEmpty()) {
-            Object firstData = dataList.get(0);
-            if (firstData instanceof LinkDataForExcel) {
-                headerRow.createCell(0).setCellValue("URL");
-                headerRow.createCell(1).setCellValue("Link");
-                headerRow.createCell(2).setCellValue("Page Name");
-                headerRow.createCell(3).setCellValue("Status");
-            } else if (firstData instanceof SeoAnalysisData) {
-                headerRow.createCell(0).setCellValue("URL");
-                headerRow.createCell(1).setCellValue("Page Name");
-                headerRow.createCell(2).setCellValue("Meta Tags");
-                headerRow.createCell(3).setCellValue("Header Tags");
-                headerRow.createCell(4).setCellValue("Content Type");
-            } else if (firstData instanceof CrawledImageData) {
-                headerRow.createCell(0).setCellValue("URL");
-                headerRow.createCell(1).setCellValue("Page Name");
-                headerRow.createCell(2).setCellValue("Image URL");
-                headerRow.createCell(3).setCellValue("Alt Text");
-                headerRow.createCell(4).setCellValue("Image Size");
-            }
+        // Set the default directory
+        String userHomeFolder = System.getProperty("user.home");
+        File defaultDirectory = new File(userHomeFolder + "/Downloads");
+        fileChooser.setInitialDirectory(defaultDirectory);
+
+        // Set the file extension filter
+        FileChooser.ExtensionFilter extFilter = new FileChooser.ExtensionFilter("Excel files (*.xlsx)", "*.xlsx");
+        fileChooser.getExtensionFilters().add(extFilter);
+
+        // Show save file dialog
+        return fileChooser.showSaveDialog(((Node) exportButton).getScene().getWindow());
+    }
+
+    private int createTitleRow(Sheet sheet, String title, Class<?> dataType) {
+        CellStyle titleStyle = sheet.getWorkbook().createCellStyle();
+        titleStyle.setAlignment(HorizontalAlignment.CENTER);
+        titleStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
+        titleStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+
+        Row titleRow = sheet.createRow(0);
+        Cell titleCell = titleRow.createCell(0);
+        titleCell.setCellValue(title);
+        titleCell.setCellStyle(titleStyle);
+
+        String[] headers;
+        if (dataType == LinkDataForExcel.class) {
+            // If the data type is LinkDataForExcel, include the additional "Link Type" column
+            headers = new String[]{"Page Name", "Page Url", "Link", "Link Type", "Status"};
+        } else if (dataType == SeoAnalysisData.class) {
+            headers = new String[]{"URL", "Page Name", "Meta Tags", "Header Tags", "Content Type", "Load Time", "Repeated Words"};
+        } else if (dataType == CrawledImageData.class) {
+            headers = new String[]{"URL", "Page Name", "Image URL", "Alt Text", "Image Size"};
+        } else {
+            headers = new String[]{};
         }
 
-        // Populating data
+        Row headerRow = sheet.createRow(1); // Row for headers
+        for (int i = 0; i < headers.length; i++) {
+            headerRow.createCell(i).setCellValue(headers[i]);
+        }
+
+        // Merge cells for title
+        sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, headers.length - 1));
+
+        return 2; // Start from row 2 for data
+    }
+
+    private void populateData(Sheet sheet, List<? extends Object> dataList, int startRow) {
+        int currentRow = startRow;
         for (Object data : dataList) {
             Row row = sheet.createRow(currentRow++);
             // Populate data based on the type
             if (data instanceof LinkDataForExcel linkData) {
-                row.createCell(0).setCellValue(linkData.getUrl());
-                row.createCell(1).setCellValue(linkData.getLink());
-                row.createCell(2).setCellValue(linkData.getPageName());
-                row.createCell(3).setCellValue(linkData.getStatus());
+                row.createCell(0).setCellValue(linkData.getPageName());
+                row.createCell(1).setCellValue(linkData.getPageUrl());
+                row.createCell(2).setCellValue(linkData.getLinkUrl());
+                row.createCell(3).setCellValue(linkData.getLinkType());
+                row.createCell(4).setCellValue(linkData.getStatus());
             } else if (data instanceof SeoAnalysisData seoData) {
                 row.createCell(0).setCellValue(seoData.getUrl());
                 row.createCell(1).setCellValue(seoData.getPageName());
                 row.createCell(2).setCellValue(seoData.getMetaTags());
                 row.createCell(3).setCellValue(seoData.getHeaderTags());
                 row.createCell(4).setCellValue(seoData.getContentType());
+                row.createCell(5).setCellValue(seoData.getLoadTime());
+                row.createCell(6).setCellValue(seoData.getRepeatedWords());
             } else if (data instanceof CrawledImageData imageData) {
                 row.createCell(0).setCellValue(imageData.getUrl());
                 row.createCell(1).setCellValue(imageData.getPageName());
@@ -939,15 +1423,10 @@ public class WebCrawlingApp extends Application {
                 row.createCell(4).setCellValue(imageData.getImageSize());
             }
         }
-
-        return currentRow;
     }
 
 
 
-    private boolean isTelephoneLink(String link) {
-        return link.startsWith("tel:");
-    }
 
     private WebClient createWebClient() {
         WebClient webClient = new WebClient(com.gargoylesoftware.htmlunit.BrowserVersion.CHROME);
@@ -966,9 +1445,144 @@ public class WebCrawlingApp extends Application {
             button.setDisable(true);
         }
     }
+    private String getPageLoadTime(String url) {
+        // Start time
+        long startTime = System.currentTimeMillis();
+
+        // Fetch the webpage content using Jsoup
+        try {
+            Document doc = Jsoup.connect(url).get();
+
+            // Stop time
+            long endTime = System.currentTimeMillis();
+
+            // Calculate page load time
+            return String.valueOf(endTime - startTime);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return "unable to fetch page load time"; // Return -1 if unable to fetch page load time
+    }
+
+    public static String countRepeatedWords(String url) {
+        Map<String, Integer> wordCount = new HashMap<>();
+        try {
+            Document doc = Jsoup.connect(url).get();
+            String text = doc.body().text(); // Extract text from the body of the HTML document
+
+            // Split the text into words using whitespace as delimiter
+            String[] words = text.split("\\s+");
+
+            // Count occurrences of each word
+            for (String word : words) {
+                wordCount.put(word, wordCount.getOrDefault(word, 0) + 1);
+            }
+
+            // Filter out non-repeated words
+            Map<String, Integer> repeatedWords = new HashMap<>();
+            for (Map.Entry<String, Integer> entry : wordCount.entrySet()) {
+                if (entry.getValue() > 1) {
+                    repeatedWords.put(entry.getKey(), entry.getValue());
+                }
+            }
+            return mapToString(repeatedWords);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    // Method to convert map to string
+    private static String mapToString(Map<String, Integer> map) {
+        StringBuilder stringBuilder = new StringBuilder();
+        for (Map.Entry<String, Integer> entry : map.entrySet()) {
+            stringBuilder.append(entry.getKey()).append(": ").append(entry.getValue()).append("\n");
+        }
+        return stringBuilder.toString();
+    }
+
+    private VBox displayGraph(String pageUrl) {
+        // Fetch webpage content and analyze it
+        WebPageData data = analyzeWebPage(pageUrl);
+
+        // Create PieChart
+        assert data != null;
+        ObservableList<PieChart.Data> pieChartData = FXCollections.observableArrayList(
+                new PieChart.Data("HTML", data.getHtmlPercentage()),
+                new PieChart.Data("CSS", data.getCssPercentage()),
+                new PieChart.Data("JavaScript", data.getJsPercentage()));
+
+        // Set names for the slices with percentages
+        for (PieChart.Data slice : pieChartData) {
+            String nameWithPercentage = slice.getName() + " (" + slice.getPieValue() + "%)";
+            slice.setName(nameWithPercentage);
+        }
+
+        final PieChart chart = new PieChart(pieChartData);
+        chart.setTitle("Content Breakdown");
+
+        // Hide slice percentages
+        chart.setLabelsVisible(false);
+
+        VBox.setVgrow(chart, Priority.ALWAYS);
+
+        return new VBox(chart);
+    }
 
 
+    private WebPageData analyzeWebPage(String url) {
+        try {
+            Document doc = Jsoup.connect(url).get();
+            Elements cssElements = doc.select("link[rel=stylesheet]");
+            Elements jsElements = doc.select("script[src]");
+            Elements htmlElements = doc.select("html *");
 
+            int totalElements = cssElements.size() + jsElements.size() + htmlElements.size();
+            int cssCount = cssElements.size();
+            int jsCount = jsElements.size();
+
+            // Calculate percentages
+            int cssPercentage = (int) Math.ceil((cssCount * 100.0) / totalElements);
+            int jsPercentage = (int) Math.ceil((jsCount * 100.0) / totalElements);
+            int htmlPercentage = 100 - cssPercentage - jsPercentage;
+
+            // Adjust CSS percentage to ensure total is 100%
+            cssPercentage = 100 - jsPercentage - htmlPercentage;
+
+            return new WebPageData(url, cssPercentage, jsPercentage, htmlPercentage);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
+    public static class WebPageData {
+        private String url;
+        private int cssPercentage;
+        private int jsPercentage;
+        private int htmlPercentage;
+
+        public WebPageData(String url, int cssPercentage, int jsPercentage, int htmlPercentage) {
+            this.url = url;
+            this.cssPercentage = cssPercentage;
+            this.jsPercentage = jsPercentage;
+            this.htmlPercentage = htmlPercentage;
+        }
+
+        public int getCssPercentage() {
+            return cssPercentage;
+        }
+
+        public int getJsPercentage() {
+            return jsPercentage;
+        }
+
+        public int getHtmlPercentage() {
+            return htmlPercentage;
+        }
+    }
 
     public static class SEOData {
         private final String pageName;
@@ -984,6 +1598,7 @@ public class WebCrawlingApp extends Application {
             this.meta = meta;
             H1 = h1;
         }
+
 
         public String getPageName() {
             return pageName;
@@ -1066,48 +1681,58 @@ public class WebCrawlingApp extends Application {
     }
 
     public static class LinkDataForExcel {
-        private final String url;
-        private final String link;
-        private final String pageName;
-        private final String status;
+        private String pageName;
+        private String pageUrl;
+        private String linkUrl;
+        private String linkType;
+        private int status;
 
-        public LinkDataForExcel(String url, String link, String pageName, String status) {
-            this.url = url;
-            this.link = link;
+        public LinkDataForExcel(String pageName, String pageUrl, String linkUrl, String linkType, int status) {
             this.pageName = pageName;
+            this.pageUrl = pageUrl;
+            this.linkUrl = linkUrl;
+            this.linkType = linkType;
             this.status = status;
-        }
-
-        public String getUrl() {
-            return url;
-        }
-
-        public String getLink() {
-            return link;
         }
 
         public String getPageName() {
             return pageName;
         }
 
-        public String getStatus() {
+        public String getPageUrl() {
+            return pageUrl;
+        }
+
+        public String getLinkUrl() {
+            return linkUrl;
+        }
+
+        public String getLinkType() {
+            return linkType;
+        }
+
+        public int getStatus() {
             return status;
         }
     }
 
     public static class SeoAnalysisData {
-        private final String url;
-        private final String pageName;
-        private final String metaTags;
-        private final String headerTags;
-        private final String contentType;
+        private String url;
+        private String pageName;
+        private String metaTags;
+        private String headerTags;
+        private String contentType;
+        private String loadTime;
+        private String repeatedWords;
 
-        public SeoAnalysisData(String url, String pageName, String metaTags, String headerTags, String contentType) {
+        public SeoAnalysisData(String url, String pageName, String metaTags, String headerTags, String contentType, String loadTime, String repeatedWords) {
             this.url = url;
             this.pageName = pageName;
             this.metaTags = metaTags;
             this.headerTags = headerTags;
             this.contentType = contentType;
+            this.loadTime = loadTime;
+            this.repeatedWords = repeatedWords;
         }
 
         public String getUrl() {
@@ -1128,6 +1753,14 @@ public class WebCrawlingApp extends Application {
 
         public String getContentType() {
             return contentType;
+        }
+
+        public String getLoadTime() {
+            return loadTime;
+        }
+
+        public String getRepeatedWords() {
+            return repeatedWords;
         }
     }
 
@@ -1170,5 +1803,66 @@ public class WebCrawlingApp extends Application {
 
     }
 
+    public static class SEODataForCrawling {
+        private final String pageName;
+        private final String contentType;
+        private final String pageUrl;
+
+        public SEODataForCrawling(String pageName, String contentType, String pageUrl) {
+            this.pageName = pageName;
+            this.contentType = contentType;
+            this.pageUrl = pageUrl;
+        }
+
+        public String getPageName() {
+            return pageName;
+        }
+
+        public String getContentType() {
+            return contentType;
+        }
+
+        public String getPageUrl() {
+            return pageUrl;
+        }
+    }
+
+    public static class PageData {
+        private String pageName;
+        private int status;
+        private String linkUrl;
+        private String linkType;
+
+        public PageData(String pageName, int status, String linkUrl, String linkType) {
+            this.pageName = pageName;
+            this.status = status;
+            this.linkUrl = linkUrl;
+            this.linkType = linkType;
+
+        }
+
+        public PageData(String pageName) {
+            this.pageName = pageName;
+        }
+
+        // Getter methods for the properties
+        public String getPageName() {
+            return pageName;
+        }
+
+        public int getStatus() {
+            return status;
+        }
+
+        public String getLinkUrl() {
+            return linkUrl;
+        }
+        public String getLinkType() {
+            return linkType;
+        }
+    }
+
+
 }
+
 
