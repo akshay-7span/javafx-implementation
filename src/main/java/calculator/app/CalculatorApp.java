@@ -15,9 +15,6 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
-import static calculator.constants.CalculatorConstants.buttonLabelsBasic;
-import static calculator.constants.CalculatorConstants.buttonLabelsScientific;
-
 public class CalculatorApp extends Application {
     private ListView<String> historyListView;
     private TextField displayField;
@@ -41,7 +38,7 @@ public class CalculatorApp extends Application {
         gridPane.add(displayField, 0, 0, 4, 1);
 
         ButtonGridManager buttonGridManager = new ButtonGridManager(gridPane, this);
-        buttonGridManager.addButtonsToGrid(buttonLabelsBasic);
+        buttonGridManager.addButtonsToGrid(CalculatorConstants.buttonLabelsBasic);
 
         Button toggleButton = new Button(CalculatorConstants.SCIENTIFIC);
         toggleButton.setOnAction(e -> toggleMode());
@@ -64,13 +61,13 @@ public class CalculatorApp extends Application {
     }
 
     public void buttonClicked(String buttonLabel) {
-        ButtonActionHandler buttonActionHandler = new ButtonActionHandler(displayField, historyListView, isScientificMode, gridPane);
+        ButtonActionHandler buttonActionHandler = new ButtonActionHandler(this, displayField, historyListView, isScientificMode, gridPane);
         buttonActionHandler.buttonClicked(buttonLabel);
     }
 
-    private void toggleMode() {
+    public void toggleMode() {
         isScientificMode = !isScientificMode;
-        String[][] buttonLabels = isScientificMode ? buttonLabelsScientific : buttonLabelsBasic;
+        String[][] buttonLabels = isScientificMode ? CalculatorConstants.buttonLabelsScientific : CalculatorConstants.buttonLabelsBasic;
 
         ButtonGridManager buttonGridManager = new ButtonGridManager(gridPane, this);
         buttonGridManager.clearButtonsFromGrid();

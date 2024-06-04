@@ -14,22 +14,19 @@ import java.util.function.Function;
 public class ButtonActionHandler {
     private final TextField displayField;
     private final ListView<String> historyListView;
-    private boolean isScientificMode;
-    private final GridPane gridPane;
-    private CalculatorApp calculator;
+    private final CalculatorApp calculator;
 
-    public ButtonActionHandler(TextField displayField, ListView<String> historyListView, boolean isScientificMode, GridPane gridPane) {
+    public ButtonActionHandler(CalculatorApp calculator, TextField displayField, ListView<String> historyListView, boolean isScientificMode, GridPane gridPane) {
+        this.calculator = calculator;
         this.displayField = displayField;
         this.historyListView = historyListView;
-        this.isScientificMode = isScientificMode;
-        this.gridPane = gridPane;
     }
 
     public void buttonClicked(String buttonLabel) {
         switch (buttonLabel) {
             case "C" -> displayField.clear();
             case "=" -> calculate();
-            case "Toggle" -> toggleMode();
+            case "Toggle" -> calculator.toggleMode();
             case "sin" -> performUnaryOperation(Math::sin);
             case "cos" -> performUnaryOperation(Math::cos);
             case "tan" -> performUnaryOperation(Math::tan);
@@ -59,6 +56,7 @@ public class ButtonActionHandler {
         }
     }
 
+
     private void calculate() {
         String expression = displayField.getText();
         if (!expression.isEmpty()) {
@@ -76,17 +74,5 @@ public class ButtonActionHandler {
                 displayField.setText("Error: Invalid expression or mathematical operation");
             }
         }
-    }
-
-    private void toggleMode() {
-        isScientificMode = !isScientificMode;
-        String[][] buttonLabels = isScientificMode ? CalculatorConstants.buttonLabelsScientific : CalculatorConstants.buttonLabelsBasic;
-
-        ButtonGridManager buttonGridManager = new ButtonGridManager(gridPane, calculator);
-        buttonGridManager.clearButtonsFromGrid();
-        buttonGridManager.addButtonsToGrid(buttonLabels);
-
-        displayField.setPrefHeight(isScientificMode ? CalculatorConstants.DISPLAY_HEIGHT_SCIENTIFIC : CalculatorConstants.DISPLAY_HEIGHT_BASIC);
-        historyListView.setPrefHeight(isScientificMode ? CalculatorConstants.HISTORY_HEIGHT_SCIENTIFIC : CalculatorConstants.HISTORY_HEIGHT_BASIC);
     }
 }
