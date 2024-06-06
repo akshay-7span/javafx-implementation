@@ -1,58 +1,38 @@
-package calculator.app;
-
+package calculator.controller;
 import calculator.constants.CalculatorConstants;
 import calculator.handlers.ButtonActionHandler;
 import calculator.ui.ButtonGridManager;
-import calculator.ui.UISetup;
-import calculator.utils.DBUtils;
-import javafx.application.Application;
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
-import javafx.scene.Scene;
-import javafx.scene.control.Button;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.GridPane;
-import javafx.scene.layout.VBox;
-import javafx.stage.Stage;
-
-public class CalculatorApp extends Application {
+public class CalculatorController {
     private ListView<String> historyListView;
     private TextField displayField;
     private boolean isScientificMode = false;
     private GridPane gridPane;
 
-    @Override
-    public void start(Stage primaryStage) {
-        primaryStage.setTitle(CalculatorConstants.CALCULATOR);
-
-        UISetup uiSetup = new UISetup(this);
-        VBox root = uiSetup.setupUI();
-
-        Scene scene = new Scene(root, 400, 500);
-        primaryStage.setScene(scene);
-        primaryStage.show();
-
-        historyListView.getItems().addAll(DBUtils.getCalculationHistory());
-    }
-
+    // Handles button click events by delegating to ButtonActionHandler
     public void buttonClicked(String buttonLabel) {
         ButtonActionHandler buttonActionHandler = new ButtonActionHandler(this, displayField, historyListView, isScientificMode, gridPane);
         buttonActionHandler.buttonClicked(buttonLabel);
     }
 
+    // Toggles between basic and scientific mode
     public void toggleMode() {
         isScientificMode = !isScientificMode;
         String[][] buttonLabels = isScientificMode ? CalculatorConstants.buttonLabelsScientific : CalculatorConstants.buttonLabelsBasic;
 
+        // Update button grid based on the mode
         ButtonGridManager buttonGridManager = new ButtonGridManager(gridPane, this);
         buttonGridManager.clearButtonsFromGrid();
         buttonGridManager.addButtonsToGrid(buttonLabels);
 
+        // Adjust display and history list view sizes based on the mode
         displayField.setPrefHeight(isScientificMode ? CalculatorConstants.DISPLAY_HEIGHT_SCIENTIFIC : CalculatorConstants.DISPLAY_HEIGHT_BASIC);
         historyListView.setPrefHeight(isScientificMode ? CalculatorConstants.HISTORY_HEIGHT_SCIENTIFIC : CalculatorConstants.HISTORY_HEIGHT_BASIC);
     }
 
+    // Setter methods for UI components
     public void setDisplayField(TextField displayField) {
         this.displayField = displayField;
     }
@@ -65,7 +45,4 @@ public class CalculatorApp extends Application {
         this.gridPane = gridPane;
     }
 
-    public static void main(String[] args) {
-        launch(args);
-    }
 }

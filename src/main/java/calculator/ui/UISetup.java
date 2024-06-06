@@ -1,22 +1,22 @@
 package calculator.ui;
 
-import calculator.app.CalculatorApp;
 import calculator.constants.CalculatorConstants;
+import calculator.controller.CalculatorController;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
-import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 
 public class UISetup {
-    private final CalculatorApp calculatorApp;
+    private final CalculatorController calculatorController;
 
-    public UISetup(CalculatorApp calculatorApp) {
-        this.calculatorApp = calculatorApp;
+    public UISetup(CalculatorController calculatorController) {
+        this.calculatorController = calculatorController;
     }
 
+    // Sets up the user interface, including the display field and button grid
     public VBox setupUI() {
         GridPane gridPane = new GridPane();
         gridPane.setAlignment(Pos.CENTER);
@@ -30,26 +30,28 @@ public class UISetup {
         displayField.setPrefHeight(CalculatorConstants.DISPLAY_HEIGHT_BASIC);
         gridPane.add(displayField, 0, 0, 4, 1);
 
-        ButtonGridManager buttonGridManager = new ButtonGridManager(gridPane, calculatorApp);
+        ButtonGridManager buttonGridManager = new ButtonGridManager(gridPane, calculatorController);
         buttonGridManager.addButtonsToGrid(CalculatorConstants.buttonLabelsBasic);
 
         Button toggleButton = new Button(CalculatorConstants.SCIENTIFIC);
-        toggleButton.setOnAction(e -> calculatorApp.toggleMode());
+        toggleButton.setOnAction(e -> calculatorController.toggleMode());
         gridPane.add(toggleButton, 0, 9, 4, 1);
 
-        ListView<String> historyListView = new ListView<>();
+        /* ListView<String> historyListView = new ListView<>();
         historyListView.setPrefHeight(CalculatorConstants.HISTORY_HEIGHT_BASIC);
-        VBox.setMargin(historyListView, new Insets(10, 0, 0, 0));
+        VBox.setMargin(historyListView, new Insets(10, 0, 0, 0));*/
 
         VBox vBox = new VBox();
         vBox.setAlignment(Pos.CENTER);
         vBox.setSpacing(10);
-        vBox.getChildren().addAll(displayField, historyListView);
+        vBox.getChildren().addAll(displayField);
 
-        calculatorApp.setDisplayField(displayField);
-        calculatorApp.setHistoryListView(historyListView);
-        calculatorApp.setGridPane(gridPane);
+        calculatorController.setDisplayField(displayField);
+        // calculatorController.setHistoryListView(historyListView);
+        calculatorController.setGridPane(gridPane);
 
-        return new VBox(vBox, gridPane);
+        vBox.getChildren().add(gridPane);
+
+        return vBox;
     }
 }

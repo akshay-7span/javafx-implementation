@@ -1,7 +1,8 @@
 package calculator.ui;
 
-import calculator.app.CalculatorApp;
+import calculator.app.CalculatorAppLauncher;
 import calculator.constants.CalculatorConstants;
+import calculator.controller.CalculatorController;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
@@ -12,13 +13,14 @@ import java.util.List;
 
 public class ButtonGridManager {
     private final GridPane gridPane;
-    private final CalculatorApp calculator;
+    private final CalculatorController calculator;
 
-    public ButtonGridManager(GridPane gridPane, CalculatorApp calculator) {
+    public ButtonGridManager(GridPane gridPane, CalculatorController calculator) {
         this.gridPane = gridPane;
         this.calculator = calculator;
     }
 
+    // Adds buttons to the grid based on the provided button labels
     public void addButtonsToGrid(String[][] buttonLabels) {
         int numRows = buttonLabels.length;
         int numCols = buttonLabels[0].length;
@@ -36,6 +38,7 @@ public class ButtonGridManager {
         }
     }
 
+    // Removes all buttons from the grid
     public void clearButtonsFromGrid() {
         ObservableList<Node> children = gridPane.getChildren();
         List<Node> toRemove = new ArrayList<>();
