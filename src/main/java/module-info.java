@@ -7,8 +7,9 @@ module crawler{
     requires org.apache.poi.poi;
     requires org.apache.poi.ooxml;
     requires jsoup;
+    requires com.zaxxer.hikari;
 
 
-    exports webcrawler;
-    exports webcrawler.newUI;
+    exports webcrawler.app;
+    exports webcrawler.ui;
 }
