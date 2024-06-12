@@ -20,10 +20,8 @@ import static webcrawler.utils.DBUtils.insertImageData;
 public class ImageCrawler implements Crawler {
 
     private final Set<String> visitedUrls = new HashSet<>();
-    private final ExecutorService executor;
 
-    public ImageCrawler(ExecutorService executor) {
-        this.executor = executor;
+    public ImageCrawler() {
     }
 
     @Override

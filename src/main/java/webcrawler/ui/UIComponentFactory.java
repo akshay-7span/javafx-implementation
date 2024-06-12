@@ -17,6 +17,7 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import webcrawler.constant.Constants;
 
 import static webcrawler.ui.DataHandler.exportButton;
 import static webcrawler.ui.DataHandler.progressBar;
@@ -27,21 +28,21 @@ public class UIComponentFactory {
 
     public static Button startButton(){
         // Creating button
-        Button startButton = new Button("Start Crawling");
-        startButton.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 10 20;");
+        Button startButton = new Button(Constants.START_BUTTON);
+        startButton.setStyle(Constants.BUTTON_STYLE);
         return startButton;
     }
     public static VBox createBorderedVBox(double width, double height) {
         VBox vbox = new VBox();
         vbox.setPrefSize(width, height);
-        vbox.getStyleClass().add("vbox");
+        vbox.getStyleClass().add(Constants.VBOX);
         return vbox;
     }
 
     public static TextField textField (){
         // Creating text area
         TextField urlTextField = new TextField();
-        urlTextField.setPromptText("Enter URL"); // Displaying the text as prompt in the text field
+        urlTextField.setPromptText(Constants.ENTER_URL); // Displaying the text as prompt in the text field
 
         // Setting up the width of the text field
         urlTextField.setPrefWidth(400);
@@ -71,22 +72,22 @@ public class UIComponentFactory {
     }
     public static Label createLabelForTitle(){
         // Create a label for the title
-        Label titleLabel = new Label("Crawlabillity");
-        titleLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
+        Label titleLabel = new Label(Constants.TITLE_LABEL_TEXT);
+        titleLabel.setStyle(Constants.TITLE_LABEL_STYLE);
         return titleLabel;
     }
     public static Label siteIndexabilityLabel(){
         // Create a label for Site Indexability
-        Label siteIndexabilityLabel = new Label("Site Indexability");
-        siteIndexabilityLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
+        Label siteIndexabilityLabel = new Label(Constants.SITE_INDEXABILITY_LABEL_TEXT);
+        siteIndexabilityLabel.setStyle(Constants.LABEL_STYLE);
         siteIndexabilityLabel.setPadding(new Insets(5));
         return siteIndexabilityLabel;
     }
 
     public static Label crawlBudgetWasteLabel(){
         // Create a label for Crawl Budget Waste
-        Label crawlBudgetWasteLabel = new Label("Crawl Budget Waste");
-        crawlBudgetWasteLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
+        Label crawlBudgetWasteLabel = new Label(Constants.CRAWL_BUDGET_WASTE_LABEL_TEXT);
+        crawlBudgetWasteLabel.setStyle(Constants.LABEL_STYLE);
         crawlBudgetWasteLabel.setPadding(new Insets(5));
         return crawlBudgetWasteLabel;
     }
@@ -106,19 +107,19 @@ public class UIComponentFactory {
         tabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
 
         // Create tabs and their respective content
-        Tab metaTab = new Tab("Meta");
-        Tab h1Tab = new Tab("H1");
-        Tab imageTab = new Tab("Image");
-        Tab wordCountTab = new Tab("Repeated Word Count");
-        Tab links = new Tab("Crawl Links");
+        Tab metaTab = new Tab(Constants.META_TAB_TEXT);
+        Tab h1Tab = new Tab(Constants.H1_TAB_TEXT);
+        Tab imageTab = new Tab(Constants.IMAGE_TAB_TEXT);
+        Tab wordCountTab = new Tab(Constants.WORD_COUNT_TAB_TEXT);
+        Tab links = new Tab(Constants.LINKS_TAB_TEXT);
 
         // Add content to tabs (you can add your specific content here)
         // For demonstration, adding a label with the tab name
-        metaTab.setContent(new Label("Meta Content"));
-        h1Tab.setContent(new Label("H1 Content"));
-        imageTab.setContent(new Label("Image Content"));
-        wordCountTab.setContent(new Label("Word Count Content"));
-        links.setContent(new Label("Crawl Links Content"));
+        metaTab.setContent(new Label(Constants.META_TAB_CONSTANT));
+        h1Tab.setContent(new Label(Constants.H1_TAB_CONSTANT));
+        imageTab.setContent(new Label(Constants.IMAGE_TAB_CONSTANT));
+        wordCountTab.setContent(new Label(Constants.WORD_COUNT_CONSTANT));
+        links.setContent(new Label(Constants.LINKS_TAB_CONSTANT));
 
         // Add tabs to the TabPane
         tabPane.getTabs().addAll(metaTab, h1Tab, imageTab, wordCountTab, links);

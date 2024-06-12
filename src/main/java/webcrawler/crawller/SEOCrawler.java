@@ -15,11 +15,9 @@ import static webcrawler.utils.CrawlerUtils.*;
 public class SEOCrawler implements Crawler {
 
     private final Analyzer analyzer;
-    private final ExecutorService executor;
 
-    public SEOCrawler(Analyzer analyzer, ExecutorService executor) {
+    public SEOCrawler(Analyzer analyzer) {
         this.analyzer = analyzer;
-        this.executor = executor;
     }
 
     @Override

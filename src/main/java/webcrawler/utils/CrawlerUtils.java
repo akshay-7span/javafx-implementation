@@ -27,6 +27,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
+import webcrawler.constant.Constants;
 import webcrawler.tables.DataTables.*;
 
 import java.io.File;
@@ -77,7 +78,7 @@ public class CrawlerUtils {
     public static int getLinkStatus(String link) {
         try {
             HttpURLConnection connection = (HttpURLConnection) new URL(link).openConnection();
-            connection.setRequestMethod("HEAD");
+            connection.setRequestMethod(Constants.HTTP_METHOD_HEAD);
             connection.connect();
             int status = connection.getResponseCode();
             connection.disconnect();
@@ -160,25 +161,25 @@ public class CrawlerUtils {
     }
 
     public static void exportToExcel(Button exportButton) throws SQLException {
-        System.setProperty("org.apache.poi.util.POILogger", "org.apache.poi.util.SimpleLogger");
+        System.setProperty(Constants.POI_LOGGER_PROPERTY , Constants.POI_LOGGER_VALUE );
 
         Workbook workbook = new XSSFWorkbook();
 
         // Export Link Data
-        Sheet linkSheet = workbook.createSheet("Link Data");
-        int linkStartRow = createTitleRow(linkSheet, "Link Data", LinkDataForExcel.class);
+        Sheet linkSheet = workbook.createSheet(Constants.LINK_DATA);
+        int linkStartRow = createTitleRow(linkSheet, Constants.LINK_DATA, LinkDataForExcel.class);
         List<LinkDataForExcel> linkDataList = retrieveLinkDataFromDatabase();
         populateData(linkSheet, linkDataList, linkStartRow);
 
         // Export SEO Analysis
-        Sheet seoSheet = workbook.createSheet("SEO Analysis");
-        int seoStartRow = createTitleRow(seoSheet, "SEO Analysis", SeoAnalysisData.class);
+        Sheet seoSheet = workbook.createSheet(Constants.SEO_ANALYSIS);
+        int seoStartRow = createTitleRow(seoSheet, Constants.SEO_ANALYSIS, SeoAnalysisData.class);
         List<SeoAnalysisData> seoDataList = retrieveSeoAnalysisDataFromDatabase();
         populateData(seoSheet, seoDataList, seoStartRow);
 
         // Export Crawled Images
-        Sheet imageSheet = workbook.createSheet("Crawled Images");
-        int imageStartRow = createTitleRow(imageSheet, "Crawled Images", CrawledImageData.class);
+        Sheet imageSheet = workbook.createSheet(Constants.CRAWLED_IMAGES);
+        int imageStartRow = createTitleRow(imageSheet, Constants.CRAWLED_IMAGES, CrawledImageData.class);
         List<CrawledImageData> imageDataList = retrieveCrawledImageDataFromDatabase();
         populateData(imageSheet, imageDataList, imageStartRow);
 
@@ -214,16 +215,16 @@ public class CrawlerUtils {
     // Add this method to your class
     private static File showSaveFileDialog(Button exportButton) {
         FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Save Excel File");
-        fileChooser.setInitialFileName("web_crawling_details.xlsx");
+        fileChooser.setTitle(Constants.SAVE_EXCEL_FILE);
+        fileChooser.setInitialFileName(Constants.EXCEL_FILE_TITLE);
 
         // Set the default directory
-        String userHomeFolder = System.getProperty("user.home");
-        File defaultDirectory = new File(userHomeFolder + "/Downloads");
+        String userHomeFolder = System.getProperty(Constants.USER_HOME);
+        File defaultDirectory = new File(userHomeFolder + Constants.DEFAULT_USER_DIRECTORY);
         fileChooser.setInitialDirectory(defaultDirectory);
 
         // Set the file extension filter
-        FileChooser.ExtensionFilter extFilter = new FileChooser.ExtensionFilter("Excel files (*.xlsx)", "*.xlsx");
+        FileChooser.ExtensionFilter extFilter = new FileChooser.ExtensionFilter(Constants.EXCEL_FILE_DESCRIPTION , Constants.EXCEL_FILE_EXTENSION );
         fileChooser.getExtensionFilters().add(extFilter);
 
         // Show save file dialog
@@ -304,7 +305,7 @@ public class CrawlerUtils {
     private VBox createBorderedVBox(double width, double height) {
         VBox vbox = new VBox();
         vbox.setPrefSize(width, height);
-        vbox.getStyleClass().add("vbox");
+        vbox.getStyleClass().add(Constants.VBOX);
         return vbox;
     }
 
@@ -330,7 +331,7 @@ public class CrawlerUtils {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return "unable to fetch page load time"; // Return -1 if unable to fetch page load time
+        return Constants.PAGE_LOAD_TIME_ERROR; // Return -1 if unable to fetch page load time
     }
 
     public static String countRepeatedWords(String url) {
@@ -377,9 +378,9 @@ public class CrawlerUtils {
         // Create PieChart
         assert data != null;
         ObservableList<PieChart.Data> pieChartData = FXCollections.observableArrayList(
-                new PieChart.Data("HTML", data.getHtmlPercentage()),
-                new PieChart.Data("CSS", data.getCssPercentage()),
-                new PieChart.Data("JavaScript", data.getJsPercentage()));
+                new PieChart.Data(Constants.HTML, data.getHtmlPercentage()),
+                new PieChart.Data(Constants.CSS, data.getCssPercentage()),
+                new PieChart.Data(Constants.JAVA_SCRIPT, data.getJsPercentage()));
 
         // Set names for the slices with percentages
         for (PieChart.Data slice : pieChartData) {
@@ -388,14 +389,14 @@ public class CrawlerUtils {
 
             // Set color for each slice based on content type
             switch (slice.getName()) {
-                case "HTML" -> slice.getNode().setStyle("-fx-pie-color: #FFA726;"); // Orange
-                case "CSS" -> slice.getNode().setStyle("-fx-pie-color: #4CAF50;"); // Green
-                case "JavaScript" -> slice.getNode().setStyle("-fx-pie-color: #03A9F4;"); // Blue
+                case "HTML" -> slice.getNode().setStyle("-fx-pie-color:" +Constants.HTML_COLOR + ";"); // Orange
+                case "CSS" -> slice.getNode().setStyle("-fx-pie-color:" +Constants.CSS_COLOR + ";"); // Green
+                case "JavaScript" -> slice.getNode().setStyle("-fx-pie-color:" +Constants.JS_COLOR + ";"); // Blue
             }
         }
 
         final PieChart chart = new PieChart(pieChartData);
-        chart.setTitle("Content Breakdown");
+        chart.setTitle(Constants.CONTENT_BREAKDOWN_TITLE);
 
         // Hide slice percentages
         chart.setLabelsVisible(false);
@@ -412,9 +413,9 @@ public class CrawlerUtils {
     private static WebPageData analyzeWebPage(String url) {
         try {
             Document doc = Jsoup.connect(url).get();
-            Elements cssElements = doc.select("link[rel=stylesheet]");
-            Elements jsElements = doc.select("script[src]");
-            Elements htmlElements = doc.select("html *");
+            Elements cssElements = doc.select(Constants.CSS_SELECTOR);
+            Elements jsElements = doc.select(Constants.JS_SELECTOR );
+            Elements htmlElements = doc.select(Constants.ALL_HTML_SELECTOR);
 
             int totalElements = cssElements.size() + jsElements.size() + htmlElements.size();
             int cssCount = cssElements.size();
@@ -439,7 +440,7 @@ public class CrawlerUtils {
     public static boolean isURLIndexed(String url) {
         try (WebClient webClient = new WebClient(BrowserVersion.CHROME)) {
             webClient.getOptions().setJavaScriptEnabled(false);
-            HtmlPage page = webClient.getPage("https://www.google.com/search?q=site:" + url);
+            HtmlPage page = webClient.getPage(Constants.BASE_URL + url);
             return !page.asXml().contains("did not match any documents");
         } catch (Exception ex) {
             System.out.println("An error occurred while checking indexed pages.");
@@ -449,7 +450,7 @@ public class CrawlerUtils {
     // Method to check if crawling is blocked for a given URL
     public static boolean isCrawlingBlocked(String url) throws IOException {
         HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
-        connection.setRequestMethod("GET");
+        connection.setRequestMethod(Constants.HTTP_METHOD_GET);
         connection.connect();
         int responseCode = connection.getResponseCode();
         return responseCode == HttpURLConnection.HTTP_FORBIDDEN; // Check if response is Forbidden (403)
