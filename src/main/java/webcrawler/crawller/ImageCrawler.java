@@ -6,15 +6,18 @@ import com.gargoylesoftware.htmlunit.html.HtmlPage;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.scene.control.ProgressBar;
+import webcrawler.utils.DataStore;
 
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.ExecutorService;
 
-import static webcrawler.utils.CrawlerUtils.*;
-import static webcrawler.utils.DBUtils.insertImageData;
+import static webcrawler.utils.CrawlerUtils.createWebClient;
+import static webcrawler.utils.CrawlerUtils.decrementActiveTasks;
+import static webcrawler.utils.CrawlerUtils.extractLinks;
+import static webcrawler.utils.CrawlerUtils.extractPageName;
+import static webcrawler.utils.CrawlerUtils.getImageSize;
 
 
 public class ImageCrawler implements Crawler {
@@ -73,7 +76,7 @@ public class ImageCrawler implements Crawler {
                 try {
                     int imageSize = getImageSize(imageUrl);
                     String imageSizeStr = String.format("%.2f", (double) imageSize / 1024) + " KB";
-                    insertImageData(pageName, pageUrl, imageUrl, imageAltText, imageSizeStr);
+                    DataStore.insertImageData(pageName, pageUrl, imageUrl, imageAltText, imageSizeStr);
                 } catch (IOException e) {
                     System.err.println("Error saving image data to the database: " + e.getMessage());
                 }

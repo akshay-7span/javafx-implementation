@@ -4,9 +4,9 @@ import com.gargoylesoftware.htmlunit.html.DomElement;
 import com.gargoylesoftware.htmlunit.html.DomNodeList;
 import com.gargoylesoftware.htmlunit.html.HtmlElement;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
+import webcrawler.utils.DataStore;
 
 import static webcrawler.utils.CrawlerUtils.*;
-import static webcrawler.utils.DBUtils.insertSEOData;
 
 
 public class SEOAnalyzer implements Analyzer {
@@ -35,7 +35,7 @@ public class SEOAnalyzer implements Analyzer {
         String pageLoadTime = getPageLoadTime(url);
         String repeatedWords = countRepeatedWords(url);
 
-        insertSEOData(url, title, metaTagsBuilder.toString(), headerTagsBuilder.toString(), contentType, pageLoadTime, repeatedWords, isIndexed, crawlingBlocked);
+        DataStore.insertSEOData(url, title, metaTagsBuilder.toString(), headerTagsBuilder.toString(), contentType, pageLoadTime, repeatedWords, isIndexed, crawlingBlocked);
     }
 
 }

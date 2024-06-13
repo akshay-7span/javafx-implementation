@@ -6,14 +6,18 @@ import com.gargoylesoftware.htmlunit.WebClient;
 import com.gargoylesoftware.htmlunit.html.HtmlAnchor;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
 import javafx.scene.control.ProgressBar;
+import webcrawler.utils.DataStore;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 
-import static webcrawler.utils.CrawlerUtils.*;
-import static webcrawler.utils.DBUtils.insertCrawledData;
+import static webcrawler.utils.CrawlerUtils.decrementActiveTasks;
+import static webcrawler.utils.CrawlerUtils.extractDomain;
+import static webcrawler.utils.CrawlerUtils.getAbsoluteUrl;
+import static webcrawler.utils.CrawlerUtils.getLinkStatus;
+import static webcrawler.utils.CrawlerUtils.isSameDomain;
 
 
 public class LinkCrawler implements Crawler {
@@ -56,10 +60,10 @@ public class LinkCrawler implements Crawler {
                             int status = getLinkStatus(absoluteUrl);
                             String pageName = page.getTitleText();
                             if (isSameDomain(absoluteUrl, domain)) {
-                                insertCrawledData(pageName, url, absoluteUrl, "Internal Link", status);
+                                DataStore.insertCrawledData(pageName, url, absoluteUrl, "Internal Link", status);
                                 crawlLinksRecursive(absoluteUrl, domain, crawledUrls);
                             } else {
-                                insertCrawledData(pageName, url, absoluteUrl, "External Link", status);
+                                DataStore.insertCrawledData(pageName, url, absoluteUrl, "External Link", status);
                             }
                         }
                     } catch (FailingHttpStatusCodeException e) {

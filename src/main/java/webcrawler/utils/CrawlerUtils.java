@@ -28,7 +28,10 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
 import webcrawler.constant.Constants;
-import webcrawler.tables.DataTables.*;
+import webcrawler.tables.DataTables.CrawledImageData;
+import webcrawler.tables.DataTables.LinkDataForExcel;
+import webcrawler.tables.DataTables.SeoAnalysisData;
+import webcrawler.tables.DataTables.WebPageData;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -45,7 +48,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 
-import static webcrawler.utils.DBUtils.*;
+import static webcrawler.utils.DataStore.retrieveCrawledImageDataFromDatabase;
+import static webcrawler.utils.DataStore.retrieveLinkDataFromDatabase;
+import static webcrawler.utils.DataStore.retrieveSeoAnalysisDataFromDatabase;
 
 public class CrawlerUtils {
 
@@ -458,5 +463,7 @@ public class CrawlerUtils {
     public static PieChart createPieChart(ObservableList<PieChart.Data> pieChartData) {
         return new PieChart(pieChartData);
     }
-
+    public static String generateKey(String pageName, String linkUrl) {
+        return pageName + "-" + linkUrl;
+    }
 }

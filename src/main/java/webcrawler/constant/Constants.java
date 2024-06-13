@@ -87,5 +87,9 @@ public class Constants {
 
     public static String BASE_URL = "https://www.google.com/search?q=site:";
 
+    public static final String PROGRESS_STYLE = "-fx-pref-width: 150px; -fx-pref-height: 20px; -fx-background-color: #d3d3d3; -fx-accent: #00ff00;";
+    public static final String TAB_TEXT_CRAWL_LINKS = "Crawl Links";
+    public static final String LABEL_TEXT_BLOCKED = "Blocked for\ncrawling";
+
 
 }

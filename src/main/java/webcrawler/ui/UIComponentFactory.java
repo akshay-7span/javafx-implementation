@@ -22,7 +22,7 @@ import webcrawler.constant.Constants;
 import static webcrawler.ui.DataHandler.exportButton;
 import static webcrawler.ui.DataHandler.progressBar;
 import static webcrawler.utils.CrawlerUtils.createPieChart;
-import static webcrawler.utils.DBUtils.fetchDataFromDatabaseForPieChart;
+import static webcrawler.utils.DataStore.fetchDataFromDatabaseForPieChart;
 
 public class UIComponentFactory {
 

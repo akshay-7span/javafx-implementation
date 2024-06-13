@@ -10,6 +10,7 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import webcrawler.constant.Constants;
 import webcrawler.crawller.Crawler;
 import webcrawler.crawller.ImageCrawler;
 import webcrawler.crawller.LinkCrawler;
@@ -29,7 +30,7 @@ import static webcrawler.ui.DataHandler.executor;
 import static webcrawler.utils.CrawlerUtils.disableButtons;
 import static webcrawler.utils.CrawlerUtils.displayGraph;
 import static webcrawler.utils.CrawlerUtils.exportToExcel;
-import static webcrawler.utils.DBUtils.*;
+import static webcrawler.utils.DataStore.*;
 
 public class EventHandlers {
 
@@ -43,25 +44,21 @@ public class EventHandlers {
 
                 ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
                 executorService.scheduleAtFixedRate(() -> {
-                    try {
-                        List<DataTables.SEODataForCrawling> crawledSeoData = retrieveCrawledSeoDataFromDatabase();
-                        Platform.runLater(() -> {
-                            createSeoCrawlingTable().getItems().clear();
-                            createSeoCrawlingTable().getItems().addAll(crawledSeoData);
-                        });
-                        Platform.runLater(() -> {
-                            VBox rootForVbox = new VBox(10);
-                            rootForVbox.setPadding(new Insets(20));
-                            addProgressBar(rootForVbox, "5xx error  ", "5%");
-                            addProgressBar(rootForVbox, "4xx error  ", "4%");
-                            addBlockedForCrawlingProgressBar(rootForVbox);
-                            vBoxForFirstSecondTop.getChildren().clear();
-                            vBoxForFirstSecondTop.getChildren().add(rootForVbox);
-                        });
-                    } catch (SQLException e) {
-                        e.printStackTrace();
-                    }
-                }, 0, 10, TimeUnit.SECONDS);
+                    List<DataTables.SEODataForCrawling> crawledSeoData = retrieveCrawledSeoDataFromDatabase();
+                    Platform.runLater(() -> {
+                        createSeoCrawlingTable().getItems().clear();
+                        createSeoCrawlingTable().getItems().addAll(crawledSeoData);
+                    });
+                    Platform.runLater(() -> {
+                        VBox rootForVbox = new VBox(10);
+                        rootForVbox.setPadding(new Insets(20));
+                        addProgressBar(rootForVbox, "5xx error  ", "5%");
+                        addProgressBar(rootForVbox, "4xx error  ", "4%");
+                        addBlockedForCrawlingProgressBar(rootForVbox);
+                        vBoxForFirstSecondTop.getChildren().clear();
+                        vBoxForFirstSecondTop.getChildren().add(rootForVbox);
+                    });
+                }, 0, 20, TimeUnit.SECONDS);
             }
         });
     }
@@ -73,30 +70,26 @@ public class EventHandlers {
                     DataTables.SEODataForCrawling selectedItem = seoCrawlingTable.getSelectionModel().getSelectedItem();
                     if (selectedItem != null) {
                         String selectedUrl = selectedItem.getPageUrl();
-                        try {
-                            List<String> metaDataList = fetchMetaDataFromDatabase(selectedUrl);
-                            tableViewMeta.getItems().clear();
-                            tableViewMeta.getItems().addAll(metaDataList);
+                        List<String> metaDataList = fetchMetaDataFromDatabase(selectedUrl);
+                        tableViewMeta.getItems().clear();
+                        tableViewMeta.getItems().addAll(metaDataList);
 
-                            List<String> headerTagsList = fetchHeaderTagsFromDatabase(selectedUrl);
-                            tableViewH1.getItems().clear();
-                            tableViewH1.getItems().addAll(headerTagsList);
+                        List<String> headerTagsList = fetchHeaderTagsFromDatabase(selectedUrl);
+                        tableViewH1.getItems().clear();
+                        tableViewH1.getItems().addAll(headerTagsList);
 
-                            List<String> repeatedWordsList = fetchRepeatedWordsFromDatabase(selectedUrl);
-                            tableViewRepeatedWords.getItems().clear();
-                            tableViewRepeatedWords.getItems().addAll(repeatedWordsList);
+                        List<String> repeatedWordsList = fetchRepeatedWordsFromDatabase(selectedUrl);
+                        tableViewRepeatedWords.getItems().clear();
+                        tableViewRepeatedWords.getItems().addAll(repeatedWordsList);
 
-                            List<DataTables.ImageData> imageDataList = fetchImageDataFromDatabase(selectedUrl);
-                            createImageTable().getItems().clear();
-                            createImageTable().getItems().addAll(imageDataList);
+                        List<DataTables.ImageData> imageDataList = fetchImageDataFromDatabase(selectedUrl);
+                        createImageTable().getItems().clear();
+                        createImageTable().getItems().addAll(imageDataList);
 
-                            VBox vBox = displayGraph(selectedUrl);
-                            rightBottomVBox.getChildren().clear();
-                            rightBottomVBox.getChildren().add(vBox);
+                        VBox vBox = displayGraph(selectedUrl);
+                        rightBottomVBox.getChildren().clear();
+                        rightBottomVBox.getChildren().add(vBox);
 
-                        } catch (SQLException e) {
-                            throw new RuntimeException(e);
-                        }
                     }
                 }
             }
@@ -105,7 +98,7 @@ public class EventHandlers {
 
     public static void setTabPaneSelectionListener(TabPane tabPane, ProgressBar progressBar, TableView<DataTables.PageData> linkDetailsTable) {
         tabPane.getSelectionModel().selectedItemProperty().addListener((obs, oldTab, newTab) -> {
-            if (newTab != null && newTab.getText().equals("Crawl Links")) {
+            if (newTab != null && newTab.getText().equals(Constants.TAB_TEXT_CRAWL_LINKS)) {
                 if (!progressBar.isVisible()) {
                     List<DataTables.PageData> distinctPageData = getDistinctPageData();
                     if (!linkDetailsTable.getItems().isEmpty()) {
@@ -121,13 +114,9 @@ public class EventHandlers {
         linkDetailsTable.getSelectionModel().selectedItemProperty().addListener((obs, oldPage, newPage) -> {
             if (newPage != null) {
                 String selectedPageName = newPage.getPageName();
-                try {
-                    List<DataTables.PageData> pageDataList = fetchDataForPageName(selectedPageName);
-                    linkDetailsTable.getItems().clear();
-                    linkDetailsTable.getItems().addAll(pageDataList);
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
+                List<DataTables.PageData> pageDataList = fetchDataForPageName(selectedPageName);
+                linkDetailsTable.getItems().clear();
+                linkDetailsTable.getItems().addAll(pageDataList);
             }
         });
     }
@@ -145,7 +134,7 @@ public class EventHandlers {
     public static void addProgressBar(VBox root, String labelName, String statusPrefix) {
         ProgressBar progressBar = new ProgressBar();
         progressBar.setPrefWidth(200);
-        progressBar.setStyle("-fx-pref-width: 150px; -fx-pref-height: 20px; -fx-background-color: #d3d3d3; -fx-accent: #00ff00;");
+        progressBar.setStyle(Constants.PROGRESS_STYLE);
         Label label = new Label(labelName);
         Label countLabel = new Label();
         countLabel.setMinWidth(30);
@@ -160,8 +149,8 @@ public class EventHandlers {
     public static void addBlockedForCrawlingProgressBar(VBox root) {
         ProgressBar progressBar = new ProgressBar();
         progressBar.setPrefWidth(200);
-        progressBar.setStyle("-fx-pref-width: 150px; -fx-pref-height: 20px; -fx-background-color: #d3d3d3; -fx-accent: #00ff00;");
-        Label label = new Label("Blocked for\ncrawling");
+        progressBar.setStyle(Constants.PROGRESS_STYLE);
+        Label label = new Label(Constants.LABEL_TEXT_BLOCKED);
         Label countLabel = new Label();
         countLabel.setMinWidth(24);
 

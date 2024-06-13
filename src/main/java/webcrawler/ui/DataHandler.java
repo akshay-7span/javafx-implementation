@@ -1,13 +1,10 @@
 package webcrawler.ui;
 
-import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
-import javafx.geometry.Insets;
 import javafx.scene.chart.PieChart;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
-import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
@@ -19,24 +16,11 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import webcrawler.constant.Constants;
-import webcrawler.crawller.Crawler;
-import webcrawler.crawller.ImageCrawler;
-import webcrawler.crawller.LinkCrawler;
-import webcrawler.crawller.SEOAnalyzer;
-import webcrawler.crawller.SEOCrawler;
 import webcrawler.handler.EventHandlers;
-import webcrawler.tables.DataTables;
 
-import java.sql.SQLException;
-import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
-import static webcrawler.handler.EventHandlers.addBlockedForCrawlingProgressBar;
-import static webcrawler.handler.EventHandlers.addProgressBar;
-import static webcrawler.tables.TableCreation.createImageTable;
 import static webcrawler.tables.TableCreation.createLinkDetailsTable;
 import static webcrawler.tables.TableCreation.createSeoCrawlingTable;
 import static webcrawler.ui.UIComponentFactory.backgroundFill;
@@ -52,16 +36,6 @@ import static webcrawler.ui.UIComponentFactory.siteIndexabilityLabel;
 import static webcrawler.ui.UIComponentFactory.startButton;
 import static webcrawler.ui.UIComponentFactory.tabPane;
 import static webcrawler.ui.UIComponentFactory.textField;
-import static webcrawler.utils.CrawlerUtils.disableButtons;
-import static webcrawler.utils.CrawlerUtils.displayGraph;
-import static webcrawler.utils.CrawlerUtils.exportToExcel;
-import static webcrawler.utils.DBUtils.fetchDataForPageName;
-import static webcrawler.utils.DBUtils.fetchHeaderTagsFromDatabase;
-import static webcrawler.utils.DBUtils.fetchImageDataFromDatabase;
-import static webcrawler.utils.DBUtils.fetchMetaDataFromDatabase;
-import static webcrawler.utils.DBUtils.fetchRepeatedWordsFromDatabase;
-import static webcrawler.utils.DBUtils.getDistinctPageData;
-import static webcrawler.utils.DBUtils.retrieveCrawledSeoDataFromDatabase;
 
 public class DataHandler {
 

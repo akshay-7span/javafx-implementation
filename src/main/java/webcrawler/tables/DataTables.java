@@ -163,12 +163,27 @@ public class DataTables {
 
     public static class SeoAnalysisData {
         private final String url;
+
         private final String pageName;
+
         private final String metaTags;
         private final String headerTags;
         private final String contentType;
         private final String loadTime;
         private final String repeatedWords;
+        private boolean isIndexed;
+        private boolean blockedForCrawling;
+        public SeoAnalysisData(String url, String pageName, String metaTags, String headerTags, String contentType, String loadTime, String repeatedWords, boolean isIndexed, boolean blockedForCrawling) {
+            this.url = url;
+            this.pageName = pageName;
+            this.metaTags = metaTags;
+            this.headerTags = headerTags;
+            this.contentType = contentType;
+            this.loadTime = loadTime;
+            this.repeatedWords = repeatedWords;
+            this.isIndexed = isIndexed;
+            this.blockedForCrawling = blockedForCrawling;
+        }
 
         public SeoAnalysisData(String url, String pageName, String metaTags, String headerTags, String contentType, String loadTime, String repeatedWords) {
             this.url = url;
@@ -179,6 +194,7 @@ public class DataTables {
             this.loadTime = loadTime;
             this.repeatedWords = repeatedWords;
         }
+
 
         public String getUrl() {
             return url;
@@ -206,6 +222,14 @@ public class DataTables {
 
         public String getRepeatedWords() {
             return repeatedWords;
+        }
+
+        public boolean isIndexed() {
+            return isIndexed;
+        }
+
+        public boolean isBlockedForCrawling() {
+            return blockedForCrawling;
         }
     }
 
