@@ -25,8 +25,5 @@ public class CalculatorAppLauncher extends Application {
         Scene scene = new Scene(root, 400, 500);
         primaryStage.setScene(scene);
         primaryStage.show();
-
-        // Load previous calculation history from the database (commented out)
-        // controller.getHistoryListView().getItems().addAll(DBUtils.getCalculationHistory());
     }
 }

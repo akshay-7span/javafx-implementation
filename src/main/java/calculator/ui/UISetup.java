@@ -37,17 +37,12 @@ public class UISetup {
         toggleButton.setOnAction(e -> calculatorController.toggleMode());
         gridPane.add(toggleButton, 0, 9, 4, 1);
 
-        /* ListView<String> historyListView = new ListView<>();
-        historyListView.setPrefHeight(CalculatorConstants.HISTORY_HEIGHT_BASIC);
-        VBox.setMargin(historyListView, new Insets(10, 0, 0, 0));*/
-
         VBox vBox = new VBox();
         vBox.setAlignment(Pos.CENTER);
         vBox.setSpacing(10);
         vBox.getChildren().addAll(displayField);
 
         calculatorController.setDisplayField(displayField);
-        // calculatorController.setHistoryListView(historyListView);
         calculatorController.setGridPane(gridPane);
 
         vBox.getChildren().add(gridPane);
