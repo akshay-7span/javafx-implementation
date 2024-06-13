@@ -1,0 +1,226 @@
+/* styles.css *//*
+
+.root {
+    -fx-background-color: #f0f0f0; */
+/* Light Grey Background for Entire Screen *//*
+
+}
+
+.hbox {
+    -fx-background-color: #dcedc8; */
+/* Light Green Panel Background *//*
+
+    -fx-padding: 20;
+    -fx-background-radius: 10;
+    -fx-effect: dropshadow(three-pass-box, #689f38, 10, 0, 0, 0.3); */
+/* Panel Shadow *//*
+
+}
+
+.tab-pane {
+    -fx-background-color: #c5e1a5; */
+/* Lighter Green Tab Pane Background *//*
+
+}
+
+.tab-pane .tab-header-area {
+    -fx-background-color: #8bc34a; */
+/* Lime Tab Background *//*
+
+}
+
+.tab-pane .tab:selected .tab-label {
+    -fx-text-fill: #ffffff; */
+/* White Tab Text *//*
+
+}
+
+.tab-pane .tab:selected {
+    -fx-background-color: #8bc34a; */
+/* Lime Selected Tab *//*
+
+}
+
+.table-view {
+    -fx-background-color: #dcedc8; */
+/* Light Green Panel Background *//*
+
+    -fx-table-cell-border-color: transparent;
+}
+
+.table-view .column-header-background {
+    -fx-background-color: #558b2f; */
+/* Dark Green Table Header Background *//*
+
+}
+
+.table-row-cell {
+    -fx-background-color: #dcedc8; */
+/* Light Green Table Row Background *//*
+
+}
+
+.table-row-cell:selected {
+    -fx-background-color: #558b2f; */
+/* Dark Green Selected Row *//*
+
+    -fx-background-insets: 0, 0 0 1 0;
+    -fx-padding: 0.166667em 0.166667em 0.166667em 0.166667em; */
+/* Adjust as needed *//*
+
+}
+
+.table-row-cell:selected .table-cell {
+    -fx-text-fill: #ffffff; */
+/* White Text for Selected Row *//*
+
+}
+
+.button {
+    -fx-background-color: #558b2f; */
+/* Dark Green Button *//*
+
+    -fx-text-fill: #ffffff; */
+/* White Text *//*
+
+}
+
+.button:hover {
+    -fx-background-color: #33691e; */
+/* Darker Green on Hover *//*
+
+    -fx-effect: dropshadow(three-pass-box, #33691e, 10, 0, 0, 0.3); */
+/* Button Hover Shadow *//*
+
+}
+
+.button:pressed {
+    -fx-effect: dropshadow(three-pass-box, #33691e, 5, 0, 0, 0.3); */
+/* Button Press Effect *//*
+
+}
+
+.tree-view {
+    -fx-background-color: #c5e1a5; */
+/* Light Green Background for TreeView *//*
+
+}
+
+#linksTabPane {
+    -fx-background-color: #dcedc8; */
+/* Light Green Background for LinksTabPane *//*
+
+}
+
+*/
+/* Additional Colors *//*
+
+.pane {
+    -fx-background-color: #c5e1a5; */
+/* Light Green Pane Background *//*
+
+}
+
+.graph-pane {
+    -fx-background-color: #c5e1a5; */
+/* Light Grey Background for Graph Pane *//*
+
+}
+
+*/
+
+
+/* styles.css */
+
+/* Root element */
+.root {
+    -fx-background-color: #f0f0f0; /* Light Gray Background for Entire Screen */
+}
+
+/* HBox */
+.hbox {
+    -fx-background-color: #dcedc8; /* Light Green Panel Background */
+    -fx-padding: 20;
+    -fx-background-radius: 10;
+    -fx-effect: dropshadow(three-pass-box, #689f38, 10, 0, 0, 0.3); /* Panel Shadow */
+}
+
+/* TabPane */
+.tab-pane {
+    -fx-background-color: #c5e1a5; /* Lighter Green Tab Pane Background */
+}
+
+/* Inside TabPane */
+.tab-pane .tab {
+    -fx-background-color: #dcedc8; /* Light Green Background for Tabs */
+}
+
+.tab-pane .tab:selected {
+    -fx-background-color: #8bc34a; /* Lime Selected Tab */
+}
+
+.tab-pane .tab:selected .tab-label {
+    -fx-text-fill: #ffffff; /* White Tab Text */
+}
+
+.tab-pane .tab-header-area {
+    -fx-background-color: #8bc34a; /* Lime Tab Header Background */
+}
+
+/* TableView */
+.table-view {
+    -fx-background-color: #dcedc8; /* Light Green Panel Background */
+    -fx-table-cell-border-color: transparent;
+}
+
+.table-view .column-header-background {
+    -fx-background-color: #558b2f; /* Dark Green Table Header Background */
+}
+
+.table-row-cell {
+    -fx-background-color: #dcedc8; /* Light Green Table Row Background */
+}
+
+.table-row-cell:selected {
+    -fx-background-color: #558b2f; /* Dark Green Selected Row */
+    -fx-background-insets: 0, 0 0 1 0;
+    -fx-padding: 0.166667em 0.166667em 0.166667em 0.166667em; /* Adjust as needed */
+}
+
+.table-row-cell:selected .table-cell {
+    -fx-text-fill: #ffffff; /* White Text for Selected Row */
+}
+
+/* Button */
+.button {
+    -fx-background-color: #558b2f; /* Dark Green Button */
+    -fx-text-fill: #ffffff; /* White Text */
+}
+
+.button:hover {
+    -fx-background-color: #33691e; /* Darker Green on Hover */
+    -fx-effect: dropshadow(three-pass-box, #33691e, 10, 0, 0, 0.3); /* Button Hover Shadow */
+}
+
+.button:pressed {
+    -fx-effect: dropshadow(three-pass-box, #33691e, 5, 0, 0, 0.3); /* Button Press Effect */
+}
+
+/* TreeView */
+.tree-view {
+    -fx-background-color: #c5e1a5; /* Light Green Background for TreeView */
+}
+
+/* LinksTabPane */
+#linksTabPane {
+    -fx-background-color: #dcedc8; /* Light Green Background for LinksTabPane */
+}
+
+/* Additional Colors */
+.pane {
+    -fx-background-color: #dcedc8; /* Light Green Pane Background */
+}
+
+.graph-pane {
+    -fx-background-color: #dcedc8; /* Light Green Background for Graph Pane */
+}
