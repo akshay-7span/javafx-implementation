@@ -1,7 +1,7 @@
 package calculator.handlers;
 
 import calculator.constants.CalculatorConstants;
-import calculator.controller.CalculatorController;
+import calculator.controller.CalculatorManager;
 import calculator.utils.MathUtils;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
@@ -12,9 +12,9 @@ import java.util.function.Function;
 public class ButtonActionHandler {
     private final TextField displayField;
     private final ListView<String> historyListView;
-    private final CalculatorController calculator;
+    private final CalculatorManager calculator;
 
-    public ButtonActionHandler(CalculatorController calculator, TextField displayField, ListView<String> historyListView, boolean isScientificMode, GridPane gridPane) {
+    public ButtonActionHandler(CalculatorManager calculator, TextField displayField, ListView<String> historyListView, boolean isScientificMode, GridPane gridPane) {
         this.calculator = calculator;
         this.displayField = displayField;
         this.historyListView = historyListView;
@@ -68,6 +68,7 @@ public class ButtonActionHandler {
                     } else {
                         displayField.setText(Double.toString(result));
                     }
+                    calculator.addHistoryEntry(expression, displayField.getText());
                 } else {
                     displayField.setText("Mathematical operation cannot be performed");
                 }
@@ -76,5 +77,4 @@ public class ButtonActionHandler {
             }
         }
     }
-
 }

@@ -1,10 +1,6 @@
 package calculator.constants;
 
 public class CalculatorConstants {
-    public static final String DB_URL = "jdbc:mysql://localhost:3306/demo";
-    public static final String DB_USER = "root";
-    public static final String DB_PASSWORD = "root";
-
     public static final int BUTTON_WIDTH = 50;
     public static final int BUTTON_HEIGHT = 50;
     public static final int DISPLAY_HEIGHT_BASIC = 40;

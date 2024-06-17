@@ -1,19 +1,20 @@
 package calculator.ui;
 
 import calculator.constants.CalculatorConstants;
-import calculator.controller.CalculatorController;
+import calculator.controller.CalculatorManager;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
+import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 
 public class UISetup {
-    private final CalculatorController calculatorController;
+    private final CalculatorManager calculatorManager;
 
-    public UISetup(CalculatorController calculatorController) {
-        this.calculatorController = calculatorController;
+    public UISetup(CalculatorManager calculatorManager) {
+        this.calculatorManager = calculatorManager;
     }
 
     // Sets up the user interface, including the display field and button grid
@@ -30,20 +31,24 @@ public class UISetup {
         displayField.setPrefHeight(CalculatorConstants.DISPLAY_HEIGHT_BASIC);
         gridPane.add(displayField, 0, 0, 4, 1);
 
-        ButtonGridManager buttonGridManager = new ButtonGridManager(gridPane, calculatorController);
+        ListView<String> historyListView = new ListView<>();
+        historyListView.setPrefHeight(CalculatorConstants.HISTORY_HEIGHT_BASIC);
+
+        ButtonGridManager buttonGridManager = new ButtonGridManager(gridPane, calculatorManager);
         buttonGridManager.addButtonsToGrid(CalculatorConstants.buttonLabelsBasic);
 
         Button toggleButton = new Button(CalculatorConstants.SCIENTIFIC);
-        toggleButton.setOnAction(e -> calculatorController.toggleMode());
+        toggleButton.setOnAction(e -> calculatorManager.toggleMode());
         gridPane.add(toggleButton, 0, 9, 4, 1);
 
         VBox vBox = new VBox();
         vBox.setAlignment(Pos.CENTER);
         vBox.setSpacing(10);
-        vBox.getChildren().addAll(displayField);
+        vBox.getChildren().addAll(displayField, historyListView);
 
-        calculatorController.setDisplayField(displayField);
-        calculatorController.setGridPane(gridPane);
+        calculatorManager.setDisplayField(displayField);
+        calculatorManager.setHistoryListView(historyListView);
+        calculatorManager.setGridPane(gridPane);
 
         vBox.getChildren().add(gridPane);
 

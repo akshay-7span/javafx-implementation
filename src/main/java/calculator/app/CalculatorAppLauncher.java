@@ -1,7 +1,7 @@
 package calculator.app;
 
 import calculator.constants.CalculatorConstants;
-import calculator.controller.CalculatorController;
+import calculator.controller.CalculatorManager;
 import calculator.ui.UISetup;
 import javafx.application.Application;
 import javafx.scene.Scene;
@@ -15,7 +15,7 @@ public class CalculatorAppLauncher extends Application {
         primaryStage.setTitle(CalculatorConstants.CALCULATOR);
 
         // Initialize the calculator controller
-        CalculatorController controller = new CalculatorController();
+        CalculatorManager controller = new CalculatorManager();
 
         // Set up the user interface using the UISetup class
         UISetup uiSetup = new UISetup(controller);

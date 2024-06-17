@@ -1,8 +1,7 @@
 package calculator.ui;
 
-import calculator.app.CalculatorAppLauncher;
 import calculator.constants.CalculatorConstants;
-import calculator.controller.CalculatorController;
+import calculator.controller.CalculatorManager;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
@@ -13,9 +12,9 @@ import java.util.List;
 
 public class ButtonGridManager {
     private final GridPane gridPane;
-    private final CalculatorController calculator;
+    private final CalculatorManager calculator;
 
-    public ButtonGridManager(GridPane gridPane, CalculatorController calculator) {
+    public ButtonGridManager(GridPane gridPane, CalculatorManager calculator) {
         this.gridPane = gridPane;
         this.calculator = calculator;
     }
