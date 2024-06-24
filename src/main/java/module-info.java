@@ -5,6 +5,7 @@ module com.example.calculator {
     requires java.sql;
 
 
-    opens app to javafx.fxml;
-    exports app;
+    opens calculator.app to javafx.fxml;
+    exports calculator.app;
+
 }

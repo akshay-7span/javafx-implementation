@@ -1,12 +1,8 @@
-package utils;
+package calculator.utils;
 
-import constants.Constants;
+import calculator.constants.Constants;
 
 public class Utils {
-
-    private Utils() {
-        // Prevent instantiation
-    }
 
     public static boolean isNumeric(String str) {
         try {

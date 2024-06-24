@@ -1,6 +1,6 @@
-package calculator;
+package calculator.ui;
 
-import constants.Constants;
+import calculator.constants.Constants;
 import javafx.scene.control.Label;
 import javafx.scene.text.Font;
 

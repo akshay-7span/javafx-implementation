@@ -1,8 +1,9 @@
-package calculator;
+package calculator.handlers;
 
-import constants.Constants;
-import exception.CalculatorException;
-import utils.Utils;
+import calculator.constants.Constants;
+import calculator.exception.CalculatorException;
+import calculator.ui.Display;
+import calculator.utils.Utils;
 
 public class OperationHandler {
 

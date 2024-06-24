@@ -1,6 +1,8 @@
-package constants;
+package calculator.constants;
 
 public class Constants {
+
+    public static String TITLE ="MAC Calculator";
     public static final String[] BUTTONS = {
             "AC", "+/-", "%", "÷",
             "7", "8", "9", "×",
